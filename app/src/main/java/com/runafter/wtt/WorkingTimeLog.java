@@ -18,6 +18,10 @@ public class WorkingTimeLog extends RealmObject {
         this.type = type;
     }
 
+    public static WorkingTimeLog of(long time, String type) {
+        return new WorkingTimeLog(time, type);
+    }
+
     enum Type {
         IN, OUT
     }

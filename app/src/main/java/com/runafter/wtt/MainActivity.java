@@ -1,6 +1,7 @@
 package com.runafter.wtt;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -39,12 +40,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         this.listLogs = (ListView)findViewById(R.id.logs);
         this.listLogs.setAdapter(logsListAdapter());
+
+        startNotificationListenerService();
+
+        Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+        startActivity(intent);
+    }
+
+    private void startNotificationListenerService() {
+        Intent intent = new Intent(this, MdmNotificationListenerService.class);
+        startService(intent);
     }
 
     private void initDB() {
         Realm.init(this);
         realm = Realm.getDefaultInstance();
-
     }
     private static class WorkingTimeLogAdapter extends RealmBaseAdapter<WorkingTimeLog> {
         private DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
