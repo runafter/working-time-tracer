@@ -56,7 +56,7 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationPosted " + sbn);
-        insert("onNotificationPosted(sbn)");
+        insert("IN");
     }
 
     private void insert(String type) {
@@ -80,6 +80,6 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     public void onNotificationRemoved(StatusBarNotification sbn) {
         super.onNotificationRemoved(sbn);
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationRemoved " + sbn);
-        insert("onNotificationRemoved(sbn)");
+        insert("OUT");
     }
 }
