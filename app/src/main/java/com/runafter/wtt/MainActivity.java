@@ -45,12 +45,6 @@ public class MainActivity extends AppCompatActivity {
         Realm.init(this);
         realm = Realm.getDefaultInstance();
 
-        realm.beginTransaction();
-        for (int i = 0 ; i < 100 ; i++) {
-            realm.insert(logOf(new Date(), "IN"));
-            realm.insert(logOf(new Date(), "OUT"));
-        }
-        realm.commitTransaction();
     }
     private static class WorkingTimeLogAdapter extends RealmBaseAdapter<WorkingTimeLog> {
         private DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
