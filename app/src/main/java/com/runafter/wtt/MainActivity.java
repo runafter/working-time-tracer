@@ -5,10 +5,12 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -19,6 +21,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -41,6 +47,7 @@ public class MainActivity extends AppCompatActivity
     private Handler handler;
     private MenuItem menuMonitoringStart;
     private MenuItem menuMonitoringRunning;
+    private WebView webview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,14 +69,36 @@ public class MainActivity extends AppCompatActivity
         menuMonitoringRunning = navigationView.getMenu().findItem(R.id.monitoring_running);
         drawer.addDrawerListener(drawerListener());
 
+        this.webview = (WebView)findViewById(R.id.webview);
         this.listLogs = (ListView)findViewById(R.id.logs);
 
         this.handler = new Handler();
 
+        initWebView();
         initDB();
 
         this.handler.post(taskInitLogListView());
         startMonitoringService();
+    }
+
+    private void initWebView() {
+        WebSettings settings = webview.getSettings();
+        settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setTextZoom(80);
+        webview.setWebViewClient(new WebViewClient() {
+
+        });
+
+        this.handler.post(new Runnable() {
+            @Override
+            public void run() {
+                webview.loadUrl("http://asunhs.github.io/dongsu/");
+            }
+        });
+
     }
 
     private DrawerLayout.DrawerListener drawerListener() {
