@@ -5,31 +5,38 @@
         <item
             android:id="@+id/nav_camera"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
-        <item
-            android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
-        <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:title="출입 기록 뷰어 선택"
+            android:visible="false"/>
         <item
             android:id="@+id/nav_manage"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
+            android:title="권한 설정" />
     </group>
 
-    <item android:title="Communicate">
+    <item android:title="출입 기록" android:id="@+id/menu_logs">
         <menu>
+            <item
+                android:id="@+id/monitoring_pattern"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="알림 감지 패턴 설정" />
+            <item
+                android:id="@+id/monitoring_start"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="감지 시작 (감지 중단됨)" />
+            <item
+                android:id="@+id/monitoring_running"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="감지중"
+                android:visible="false"/>
             <item
                 android:id="@+id/nav_share"
                 android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
+                android:title="보기"
+                android:visible="false"/>
             <item
                 android:id="@+id/nav_send"
                 android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+                android:title="초기화" />
         </menu>
     </item>
 

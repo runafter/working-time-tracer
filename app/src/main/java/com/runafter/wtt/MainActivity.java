@@ -1,8 +1,12 @@
 package com.runafter.wtt;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -31,9 +35,13 @@ import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-
+    private static final String TAG = "Main";
     private ListView listLogs;
     private Realm realm;
+    private Handler handler;
+    private MenuItem menuMonitoringStart;
+    private MenuItem menuMonitoringRunning;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,12 +58,72 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        menuMonitoringStart = navigationView.getMenu().findItem(R.id.monitoring_start);
+        menuMonitoringRunning = navigationView.getMenu().findItem(R.id.monitoring_running);
+        drawer.addDrawerListener(drawerListener());
+
+        this.listLogs = (ListView)findViewById(R.id.logs);
+
+        this.handler = new Handler();
 
         initDB();
-        this.listLogs = (ListView)findViewById(R.id.logs);
-        this.listLogs.setAdapter(logsListAdapter());
 
-        startNotificationListenerService();
+        this.handler.post(taskInitLogListView());
+        startMonitoringService();
+    }
+
+    private DrawerLayout.DrawerListener drawerListener() {
+        return new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                updateMenuToggleService();
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+            }
+        };
+    }
+
+
+    public boolean isMonitoringServiceRunning() {
+        ActivityManager manager = (ActivityManager) this.getSystemService(Activity.ACTIVITY_SERVICE);
+        String name = MdmNotificationListenerService.class.getName();
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (name.equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void updateMenuToggleService() {
+        if (isMonitoringServiceRunning()) {
+            menuMonitoringRunning.setVisible(true);
+            menuMonitoringStart.setVisible(false);
+        } else {
+            menuMonitoringRunning.setVisible(false);
+            menuMonitoringStart.setVisible(true);
+        }
+    }
+
+    private Runnable taskInitLogListView() {
+        return new Runnable() {
+            @Override
+            public void run() {
+                MainActivity.this.listLogs.setAdapter(logsListAdapter());
+            }
+        };
     }
 
 
@@ -64,12 +132,6 @@ public class MainActivity extends AppCompatActivity
         super.onDetachedFromWindow();
         realm.close();
     }
-
-    private void startNotificationListenerService() {
-        Intent intent = new Intent(this, MdmNotificationListenerService.class);
-        startService(intent);
-    }
-
     private void initDB() {
         Realm.init(this.getApplicationContext());
         realm = Realm.getDefaultInstance();
@@ -135,21 +197,63 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_camera) {
             // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
         } else if (id == R.id.nav_manage) {
-
+            openNotificationListenrSettings();
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
-            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-            startActivity(intent);
+            clearAllLogs();
+        } else if (id == R.id.monitoring_start) {
+            startMonitoringService();
+        } else if (id == R.id.monitoring_running) {
+            updateMenuToggleService();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+
+    private void startMonitoringService() {
+        AsyncTask task = new AsyncTask() {
+            @Override
+            protected Object doInBackground(Object[] params) {
+                startService(new Intent(MainActivity.this, MdmNotificationListenerService.class));
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateMenuToggleService();
+                    }
+                });
+                return null;
+            }
+        };
+        task.execute();
+    }
+
+    private void openNotificationListenrSettings() {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void clearAllLogs() {
+        AsyncTask task = new AsyncTask() {
+            @Override
+            protected Object doInBackground(Object[] params) {
+                Realm realm = Realm.getDefaultInstance();
+                realm.beginTransaction();
+                realm.delete(WorkingTimeLog.class);
+                realm.commitTransaction();
+                realm.close();
+                return null;
+            }
+        };
+        task.execute();
     }
 }

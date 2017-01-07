@@ -27,7 +27,6 @@ public class MdmNotificationListenerService extends NotificationListenerService 
         Log.d(TAG, Thread.currentThread().getName() + " : onCreate ");
         initDB();
     }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
