@@ -1,25 +1,23 @@
 package com.runafter.wtt;
 
-import java.util.Date;
-
 import io.realm.RealmObject;
 
 /**
  * Created by runaf on 2017-01-06.
  */
 
-public class WorkingTimeLog extends RealmObject {
-    public WorkingTimeLog() {
+public class InOutLog extends RealmObject {
+    public InOutLog() {
         super();
     }
-    public WorkingTimeLog(Long time, String type) {
+    public InOutLog(Long time, String type) {
         this();
         this.time = time;
         this.type = type;
     }
 
-    public static WorkingTimeLog of(long time, String type) {
-        return new WorkingTimeLog(time, type);
+    public static InOutLog of(long time, String type) {
+        return new InOutLog(time, type);
     }
 
     enum Type {

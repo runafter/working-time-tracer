@@ -59,7 +59,7 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     private void insert(String type) {
         Realm realm = realm();
         realm.beginTransaction();
-        realm.insert(WorkingTimeLog.of(GregorianCalendar.getInstance().getTimeInMillis(), type));
+        realm.insert(InOutLog.of(GregorianCalendar.getInstance().getTimeInMillis(), type));
         realm.commitTransaction();
     }
 

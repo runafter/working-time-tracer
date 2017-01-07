@@ -15,7 +15,7 @@ android {
     buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.runafter.wtt"
-        minSdkVersion 18
+        minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -40,4 +40,6 @@ dependencies {
     testCompile "org.robolectric:robolectric:3.2"
 
     compile 'io.realm:android-adapters:1.4.1'
+    compile 'org.jdeferred:jdeferred-core:1.2.4'
+    compile 'org.jdeferred:jdeferred-android-aar:1.2.4@aar'
 }
