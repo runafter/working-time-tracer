@@ -27,6 +27,7 @@ import io.realm.OrderedRealmCollection;
 import io.realm.Realm;
 import io.realm.RealmBaseAdapter;
 import io.realm.RealmQuery;
+import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -58,6 +59,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        realm.close();
+    }
 
     private void startNotificationListenerService() {
         Intent intent = new Intent(this, MdmNotificationListenerService.class);
@@ -65,7 +71,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initDB() {
-        Realm.init(this);
+        Realm.init(this.getApplicationContext());
         realm = Realm.getDefaultInstance();
     }
     private static class WorkingTimeLogAdapter extends RealmBaseAdapter<WorkingTimeLog> {
@@ -107,7 +113,7 @@ public class MainActivity extends AppCompatActivity
     }
     private ListAdapter logsListAdapter() {
         RealmQuery<WorkingTimeLog> q = realm.where(WorkingTimeLog.class);
-        RealmBaseAdapter<WorkingTimeLog> adapter = new WorkingTimeLogAdapter(this, q.findAll()) ;
+        RealmBaseAdapter<WorkingTimeLog> adapter = new WorkingTimeLogAdapter(this, q.findAllSorted("time", Sort.DESCENDING)) ;
         return adapter;
     }
 

@@ -1,8 +1,6 @@
 package com.runafter.wtt;
 
 
-import android.icu.text.DateFormat;
-import android.icu.util.Calendar;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -26,15 +24,15 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     @Override
     public void onCreate() {
         super.onCreate();
-        initDB();
         Log.d(TAG, Thread.currentThread().getName() + " : onCreate ");
+        initDB();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        closeDB();
         Log.d(TAG, Thread.currentThread().getName() + " : onDestroy ");
+        closeDB();
     }
 
     private void closeDB() {
@@ -49,14 +47,14 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     }
 
     private void initDB() {
-        Realm.init(this);
+        Realm.init(this.getApplicationContext());
     }
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
-        Log.d(TAG, Thread.currentThread().getName() + " : onNotificationPosted " + sbn);
-        insert("IN");
+        Log.d(TAG, Thread.currentThread().getName() + " : onNotificationPosted " + sbn.getId());
+        insert("IN " + sbn.getPackageName());
     }
 
     private void insert(String type) {
@@ -80,6 +78,6 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     public void onNotificationRemoved(StatusBarNotification sbn) {
         super.onNotificationRemoved(sbn);
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationRemoved " + sbn);
-        insert("OUT");
+        insert("OUT " + sbn.getPackageName());
     }
 }
