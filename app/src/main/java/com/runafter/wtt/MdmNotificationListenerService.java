@@ -1,6 +1,8 @@
 package com.runafter.wtt;
 
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -10,6 +12,7 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import io.realm.Realm;
 
@@ -20,12 +23,16 @@ import io.realm.Realm;
 public class MdmNotificationListenerService extends NotificationListenerService {
     private static final String TAG = "MNLService";
     private Map<Long, Realm> realms = new ConcurrentHashMap<>();
+    private SharedPreferences prefs;
+    private Pattern packageNamePattern;
+    private String packageNameRegex;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, Thread.currentThread().getName() + " : onCreate ");
         initDB();
+        this.prefs = this.getSharedPreferences(SharePreferenceConfig.NAME, Context.MODE_PRIVATE);
     }
     @Override
     public void onDestroy() {
@@ -53,7 +60,8 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationPosted " + sbn.getId());
-        insert("IN " + sbn.getPackageName());
+        if (match(sbn))
+            insert("IN " + sbn.getPackageName());
     }
 
     private void insert(String type) {
@@ -77,6 +85,27 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     public void onNotificationRemoved(StatusBarNotification sbn) {
         super.onNotificationRemoved(sbn);
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationRemoved " + sbn);
-        insert("OUT " + sbn.getPackageName());
+        if (match(sbn))
+            insert("OUT " + sbn.getPackageName());
+    }
+
+    private boolean match(StatusBarNotification sbn) {
+        Pattern pattern = getPackageNamePattern();
+        String packageName = sbn.getPackageName();
+        return pattern.matcher(packageName).find();
+    }
+
+    private Pattern getPackageNamePattern() {
+        String regex = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, ".*");
+        if (this.packageNameRegex != null && this.packageNameRegex.equals(regex))
+            return this.packageNamePattern;
+
+        try {
+            Pattern pattern = Pattern.compile(regex);
+            this.packageNameRegex = regex;
+            return this.packageNamePattern = pattern;
+        } catch (Throwable t) {
+            return this.packageNamePattern;
+        }
     }
 }

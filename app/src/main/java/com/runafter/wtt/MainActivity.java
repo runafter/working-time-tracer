@@ -3,12 +3,15 @@ package com.runafter.wtt;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -19,6 +22,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -36,11 +40,13 @@ import io.realm.Sort;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private static final String TAG = "Main";
+
     private ListView listLogs;
     private Realm realm;
     private Handler handler;
     private MenuItem menuMonitoringStart;
     private MenuItem menuMonitoringRunning;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +63,8 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        this.prefs = this.getSharedPreferences(SharePreferenceConfig.NAME, Context.MODE_PRIVATE);
 
         menuMonitoringStart = navigationView.getMenu().findItem(R.id.monitoring_start);
         menuMonitoringRunning = navigationView.getMenu().findItem(R.id.monitoring_running);
@@ -199,8 +207,8 @@ public class MainActivity extends AppCompatActivity
             // Handle the camera action
         } else if (id == R.id.nav_manage) {
             openNotificationListenrSettings();
-        } else if (id == R.id.nav_share) {
-
+        } else if (id == R.id.monitoring_pattern) {
+            openMonitorPatternUpdateDialong();
         } else if (id == R.id.nav_send) {
             clearAllLogs();
         } else if (id == R.id.monitoring_start) {
@@ -212,6 +220,38 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void openMonitorPatternUpdateDialong() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("알림 감지 패턴 설정");
+        builder.setMessage("정규표현식으로 입력 가능합니다.");
+        builder.setCancelable(true);
+
+        String regex = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, ".*");
+
+        final EditText input = new EditText(this, null, android.support.v7.appcompat.R.attr.editTextStyle);
+        input.setText(regex);
+        builder.setView(input);
+
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                prefs.edit()
+                        .putString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, input.getText().toString())
+                        .commit();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+
+        builder.show();
     }
 
 
