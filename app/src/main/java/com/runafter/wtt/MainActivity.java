@@ -146,6 +146,19 @@ public class MainActivity extends AppCompatActivity
     }
     private static class WorkingTimeLogAdapter extends RealmBaseAdapter<WorkingTimeLog> {
         private DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        private View.OnClickListener typeOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (v.getTag() instanceof WorkingTimeLogAdapter.ViewHolder) {
+                    WorkingTimeLogAdapter.ViewHolder viewHolder = (WorkingTimeLogAdapter.ViewHolder)v.getTag();
+                    String tag = (viewHolder.typeView.getTag() instanceof String) ? (String)viewHolder.typeView.getTag() : "";
+                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                    builder.setTitle("Description");
+                    builder.setMessage(tag);
+                    builder.show();
+                }
+            }
+        };
 
         public WorkingTimeLogAdapter(@NonNull Context context, @Nullable OrderedRealmCollection<WorkingTimeLog> data) {
             super(context, data);
@@ -173,7 +186,10 @@ public class MainActivity extends AppCompatActivity
 
             WorkingTimeLog item = adapterData.get(position);
             viewHolder.timeView.setText(format(item.getTime()));
-            viewHolder.typeView.setText(item.getType().toString());
+            String type = item.getType();
+            viewHolder.typeView.setText(type != null && !type.isEmpty() ? type.toString() : "<EMPTY>");
+            viewHolder.typeView.setTag(item.getDesc());
+            convertView.setOnClickListener(typeOnClickListener);
             return convertView;
         }
 
@@ -228,18 +244,31 @@ public class MainActivity extends AppCompatActivity
         builder.setMessage("정규표현식으로 입력 가능합니다.");
         builder.setCancelable(true);
 
-        String regex = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, ".*");
+        String packageNamePattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, ".*");
+        String titlePattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TITLE_PATTERN, ".*");
+        String textPattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TEXT_PATTERN, ".*");
 
-        final EditText input = new EditText(this, null, android.support.v7.appcompat.R.attr.editTextStyle);
-        input.setText(regex);
-        builder.setView(input);
+        View convertView = LayoutInflater.from(this).inflate(R.layout.pattern_dialog_layout, null, false);
+
+        final EditText packageName = (EditText)convertView.findViewById(R.id.etPackageName);
+        final EditText title = (EditText)convertView.findViewById(R.id.etTitle);
+        final EditText text = (EditText)convertView.findViewById(R.id.etText);
+
+        packageName.setText(packageNamePattern);
+        title.setText(titlePattern);
+        text.setText(textPattern);
+
+        builder.setView(convertView);
 
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 prefs.edit()
-                        .putString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, input.getText().toString())
+                        .putString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, packageName.getText().toString())
+                        .putString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TITLE_PATTERN, title.getText().toString())
+                        .putString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TEXT_PATTERN, text.getText().toString())
                         .commit();
+                startMonitoringService();
             }
         });
 

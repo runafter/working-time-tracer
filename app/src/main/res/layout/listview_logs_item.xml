@@ -4,7 +4,8 @@
     android:id="@+id/logs_item"
     android:columnCount="2"
     android:elevation="0dp"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:clickable="true">
 
     <TextView
         android:text="time"
@@ -18,6 +19,7 @@
         android:layout_column="1"
         android:layout_columnWeight="50"
         android:id="@+id/logs_type"
-        android:layout_gravity="right"></TextView>
+        android:layout_gravity="right"
+        android:clickable="true"></TextView>
 
 </GridLayout>
