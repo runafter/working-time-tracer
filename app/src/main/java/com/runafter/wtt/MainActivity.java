@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity
     private MenuItem menuMonitoringStart;
     private MenuItem menuMonitoringRunning;
     private SharedPreferences prefs;
+    private Fragment fragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,10 +84,11 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.commit();
     }
 
-    private void viewFragment(Fragment fragment) {
+    private void replaceFragment(Fragment fragment) {
         FragmentManager fm = getFragmentManager();
         FragmentTransaction fragmentTransaction = fm.beginTransaction();
         fragmentTransaction.replace(R.id.frame, fragment);
+        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         fragmentTransaction.commit();
     }
 
@@ -200,11 +202,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void viewInOutLogsFragrment() {
-        viewFragment(InOutLogsFragment.newInstance());
+        if (!(this.fragment instanceof InOutLogsFragment))
+            replaceFragment(this.fragment = InOutLogsFragment.newInstance());
     }
 
     private void viewDashboardFragment() {
-        viewFragment(DashboardFragment.newInstance());
+        if (!(this.fragment instanceof DashboardFragment))
+            replaceFragment(this.fragment = DashboardFragment.newInstance());
     }
 
     private void openMonitorPatternUpdateDialong() {

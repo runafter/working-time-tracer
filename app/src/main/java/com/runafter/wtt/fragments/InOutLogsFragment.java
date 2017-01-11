@@ -70,14 +70,14 @@ public class InOutLogsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "InOutLogsFragment.onCreate");
+        Log.d(TAG, this + ".onCreate");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        Log.d(TAG, "InOutLogsFragment.onCreateView");
+        Log.d(TAG, this + ".onCreateView");
         View view = inflater.inflate(R.layout.fragment_in_out_logs, container, false);
         this.listLogs = (ListView)view.findViewById(R.id.logs);
         return view;
@@ -93,7 +93,7 @@ public class InOutLogsFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        Log.d(TAG, "InOutLogsFragment.onAttach");
+        Log.d(TAG, this + ".onAttach");
         if (context instanceof OnInOutFragmentInteractionListener) {
             mListener = (OnInOutFragmentInteractionListener) context;
         } else {
@@ -107,16 +107,28 @@ public class InOutLogsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "InOutLogsFragment.onResume");
+        Log.d(TAG, this + ".onResume");
         this.handler.post(taskInitLogListView());
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        Log.d(TAG, "InOutLogsFragment.onDetach");
+        Log.d(TAG, this + ".onDetach");
         mListener = null;
         realm.close();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.d(TAG, this + ".onStop");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, this + ".onDestroy");
     }
 
     /**
@@ -144,7 +156,7 @@ public class InOutLogsFragment extends Fragment {
     }
     private ListAdapter logsListAdapter() {
         realm.beginTransaction();
-        realm.insert(InOutLog.of(new Date().getTime(), "INOUT", "DESC"));
+        realm.insert(InOutLog.of(new Date().getTime(), this.hashCode() + ".INOUT", "DESC"));
         realm.commitTransaction();
         RealmQuery<InOutLog> q = realm.where(InOutLog.class);
         RealmBaseAdapter<InOutLog> adapter = new WorkingTimeLogAdapter(this.getActivity(), q.findAllSorted("time", Sort.DESCENDING)) ;
