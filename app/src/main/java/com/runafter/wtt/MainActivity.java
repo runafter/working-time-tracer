@@ -2,15 +2,17 @@ package com.runafter.wtt;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,27 +23,20 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.runafter.wtt.fragments.DashboardFragment;
+import com.runafter.wtt.fragments.InOutLogsFragment;
 
-import io.realm.OrderedRealmCollection;
 import io.realm.Realm;
-import io.realm.RealmBaseAdapter;
-import io.realm.RealmQuery;
-import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+                    DashboardFragment.OnDashboardFragmentInteractionListener,
+                    InOutLogsFragment.OnInOutFragmentInteractionListener {
     private static final String TAG = "Main";
 
-    private ListView listLogs;
+
     private Realm realm;
     private Handler handler;
     private MenuItem menuMonitoringStart;
@@ -64,20 +59,35 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        initFragment();
+
         this.prefs = this.getSharedPreferences(SharePreferenceConfig.NAME, Context.MODE_PRIVATE);
 
         menuMonitoringStart = navigationView.getMenu().findItem(R.id.monitoring_start);
         menuMonitoringRunning = navigationView.getMenu().findItem(R.id.monitoring_running);
         drawer.addDrawerListener(drawerListener());
 
-        this.listLogs = (ListView)findViewById(R.id.logs);
+
 
         this.handler = new Handler();
 
         initDB();
 
-        this.handler.post(taskInitLogListView());
         startMonitoringService();
+    }
+
+    private void initFragment() {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fm.beginTransaction();
+        fragmentTransaction.add(R.id.frame, DashboardFragment.newInstance());
+        fragmentTransaction.commit();
+    }
+
+    private void viewFragment(Fragment fragment) {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fm.beginTransaction();
+        fragmentTransaction.replace(R.id.frame, fragment);
+        fragmentTransaction.commit();
     }
 
     private DrawerLayout.DrawerListener drawerListener() {
@@ -125,14 +135,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private Runnable taskInitLogListView() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                MainActivity.this.listLogs.setAdapter(logsListAdapter());
-            }
-        };
-    }
 
 
     @Override
@@ -144,64 +146,19 @@ public class MainActivity extends AppCompatActivity
         Realm.init(this.getApplicationContext());
         realm = Realm.getDefaultInstance();
     }
-    private static class WorkingTimeLogAdapter extends RealmBaseAdapter<WorkingTimeLog> {
-        private DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        private View.OnClickListener typeOnClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (v.getTag() instanceof WorkingTimeLogAdapter.ViewHolder) {
-                    WorkingTimeLogAdapter.ViewHolder viewHolder = (WorkingTimeLogAdapter.ViewHolder)v.getTag();
-                    String tag = (viewHolder.typeView.getTag() instanceof String) ? (String)viewHolder.typeView.getTag() : "";
-                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                    builder.setTitle("Description");
-                    builder.setMessage(tag);
-                    builder.show();
-                }
-            }
-        };
 
-        public WorkingTimeLogAdapter(@NonNull Context context, @Nullable OrderedRealmCollection<WorkingTimeLog> data) {
-            super(context, data);
-        }
+    @Override
+    public void onDashboardFragmentInteraction(Uri uri) {
 
-        private static class ViewHolder {
-            TextView typeView;
-            TextView timeView;
-        }
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            LayoutInflater.from(context).inflate(R.layout.listview_logs_item, parent, false);
-
-            WorkingTimeLogAdapter.ViewHolder viewHolder;
-            if (convertView == null) {
-                convertView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.listview_logs_item, parent, false);
-                viewHolder = new WorkingTimeLogAdapter.ViewHolder();
-                viewHolder.timeView = (TextView)convertView.findViewById(R.id.logs_time);
-                viewHolder.typeView = (TextView)convertView.findViewById(R.id.logs_type);
-                convertView.setTag(viewHolder);
-            } else {
-                viewHolder = (WorkingTimeLogAdapter.ViewHolder) convertView.getTag();
-            }
-
-            WorkingTimeLog item = adapterData.get(position);
-            viewHolder.timeView.setText(format(item.getTime()));
-            String type = item.getType();
-            viewHolder.typeView.setText(type != null && !type.isEmpty() ? type.toString() : "<EMPTY>");
-            viewHolder.typeView.setTag(item.getDesc());
-            convertView.setOnClickListener(typeOnClickListener);
-            return convertView;
-        }
-
-        private String format(long time) {
-            return format.format(new Date(time));
-        }
     }
-    private ListAdapter logsListAdapter() {
-        RealmQuery<WorkingTimeLog> q = realm.where(WorkingTimeLog.class);
-        RealmBaseAdapter<WorkingTimeLog> adapter = new WorkingTimeLogAdapter(this, q.findAllSorted("time", Sort.DESCENDING)) ;
-        return adapter;
+
+    @Override
+    public void onInOutFragmentInteraction(Uri uri) {
+
     }
+
+
+
 
     @Override
     public void onBackPressed() {
@@ -231,11 +188,23 @@ public class MainActivity extends AppCompatActivity
             startMonitoringService();
         } else if (id == R.id.monitoring_running) {
             updateMenuToggleService();
+        } else if (id == R.id.menu_dashboard) {
+            viewDashboardFragment();
+        } else if (id == R.id.menu_in_out_logs) {
+            viewInOutLogsFragrment();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void viewInOutLogsFragrment() {
+        viewFragment(InOutLogsFragment.newInstance());
+    }
+
+    private void viewDashboardFragment() {
+        viewFragment(DashboardFragment.newInstance());
     }
 
     private void openMonitorPatternUpdateDialong() {
@@ -317,7 +286,7 @@ public class MainActivity extends AppCompatActivity
             protected Object doInBackground(Object[] params) {
                 Realm realm = Realm.getDefaultInstance();
                 realm.beginTransaction();
-                realm.delete(WorkingTimeLog.class);
+                realm.delete(InOutLog.class);
                 realm.commitTransaction();
                 realm.close();
                 return null;

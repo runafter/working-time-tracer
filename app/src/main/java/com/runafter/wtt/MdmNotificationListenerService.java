@@ -2,7 +2,6 @@ package com.runafter.wtt;
 
 
 import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -84,7 +83,7 @@ public class MdmNotificationListenerService extends NotificationListenerService 
         Realm realm = realm();
         realm.beginTransaction();
         String desc = descOf(sbn);
-        realm.insert(WorkingTimeLog.of(GregorianCalendar.getInstance().getTimeInMillis(), type, desc));
+        realm.insert(InOutLog.of(GregorianCalendar.getInstance().getTimeInMillis(), type, desc));
         realm.commitTransaction();
     }
 

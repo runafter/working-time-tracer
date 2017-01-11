@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_camera"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="출입 기록 뷰어 선택"
-            android:visible="false"/>
-        <item
-            android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="권한 설정" />
-    </group>
-
+    <item android:title="보기 전환" android:id="@+id/menu_view">
+        <menu>
+            <item
+                android:id="@+id/menu_dashboard"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="초기화면" />
+            <item
+                android:id="@+id/menu_in_out_logs"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="출입기록" />
+        </menu>
+    </item>
     <item android:title="출입 기록" android:id="@+id/menu_logs">
         <menu>
             <item
@@ -29,15 +28,20 @@
                 android:title="감지중"
                 android:visible="false"/>
             <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="보기"
-                android:visible="false"/>
-            <item
                 android:id="@+id/nav_send"
                 android:icon="@drawable/ic_menu_send"
                 android:title="초기화" />
         </menu>
     </item>
-
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_camera"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="출입 기록 뷰어 선택"
+            android:visible="false"/>
+        <item
+            android:id="@+id/nav_manage"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="권한 설정" />
+    </group>
 </menu>
