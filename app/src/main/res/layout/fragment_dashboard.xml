@@ -1,13 +1,93 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.DashboardFragment">
+    android:columnCount="1"
+    android:rowCount="2"
+    android:elevation="0dp"
+    android:orientation="horizontal"
+    android:clickable="true">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:orientation="vertical"
+        android:layout_marginBottom="20dp">
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="remain:"
+            android:layout_marginRight="10dp" />
+        <TextView
+            android:text="02:14:05"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:textSize="70sp"
+            android:fontFamily="sans-serif"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:gravity="fill"
+            android:layout_marginBottom="10sp" />
+        <GridLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:orientation="horizontal"
+            android:layout_gravity="right"
+            android:alignmentMode="alignBounds">
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="target"
+                android:layout_marginRight="10dp" />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="40H"
+                android:gravity="right"
+                android:layout_gravity="fill"
+                />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="worked"
+                android:layout_marginRight="10dp" />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="37:45:55"
+                android:gravity="right"
+                android:layout_gravity="fill"
+                />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="in office"
+                android:layout_marginRight="10dp" />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="30:22:55"
+                android:gravity="right"
+                android:layout_gravity="fill"
+                />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="not in office"
+                android:layout_marginRight="10dp" />
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:text="03:22:10"
+                android:gravity="right"
+                android:layout_gravity="fill"
+                />
+        </GridLayout>
+    </LinearLayout>
 
-</FrameLayout>
+    <ListView
+        android:layout_gravity="fill"
+        android:background="@android:color/holo_blue_bright"
+        android:layout_width="match_parent" />
+
+</GridLayout>
