@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.GridLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:layout_gravity="fill"
+    app:columnCount="6"
+    app:orientation="horizontal"
+    android:id="@+id/working_time_item"
+    >
+
+    <TextView
+        app:layout_columnWeight="1"
+        android:text="01-05"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvDate"
+        app:layout_gravity="fill_horizontal"
+        android:gravity="center"
+        />
+
+    <TextView
+        android:text="00:00"
+        app:layout_columnWeight="1"
+        android:id="@+id/tvStart"
+        android:layout_height="wrap_content"
+        app:layout_gravity="fill_horizontal"
+        android:gravity="center"
+        />
+
+    <TextView
+        android:text="00:00"
+        app:layout_columnWeight="1"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvEnd"
+        app:layout_gravity="fill_horizontal"
+        android:gravity="center"
+        />
+
+    <TextView
+        android:text="00:00"
+        app:layout_columnWeight="1"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvWorkedTime"
+        app:layout_gravity="fill_horizontal"
+        android:gravity="center"
+        />
+
+    <TextView
+        app:layout_columnWeight="1"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvWorkingTimeTypes"
+        app:layout_gravity="right"
+        />
+
+</android.support.v7.widget.GridLayout>

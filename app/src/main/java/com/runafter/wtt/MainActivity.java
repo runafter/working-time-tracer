@@ -14,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -60,15 +61,14 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        initFragment();
+        if (savedInstanceState == null)
+            initFragment();
 
         this.prefs = this.getSharedPreferences(SharePreferenceConfig.NAME, Context.MODE_PRIVATE);
 
         menuMonitoringStart = navigationView.getMenu().findItem(R.id.monitoring_start);
         menuMonitoringRunning = navigationView.getMenu().findItem(R.id.monitoring_running);
         drawer.addDrawerListener(drawerListener());
-
-
 
         this.handler = new Handler();
 
@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initFragment() {
+        Log.d(TAG, "initFragment");
         FragmentManager fm = getFragmentManager();
         FragmentTransaction fragmentTransaction = fm.beginTransaction();
         fragmentTransaction.add(R.id.frame, DashboardFragment.newInstance());
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void replaceFragment(Fragment fragment) {
+        Log.d(TAG, "replaceFragment " + fragment);
         FragmentManager fm = getFragmentManager();
         FragmentTransaction fragmentTransaction = fm.beginTransaction();
         fragmentTransaction.replace(R.id.frame, fragment);
@@ -202,11 +204,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void viewInOutLogsFragrment() {
+        Log.d(TAG, "viewInOutLogsFragrment");
         if (!(this.fragment instanceof InOutLogsFragment))
             replaceFragment(this.fragment = InOutLogsFragment.newInstance());
     }
 
     private void viewDashboardFragment() {
+        Log.d(TAG, "viewDashboardFragment");
         if (!(this.fragment instanceof DashboardFragment))
             replaceFragment(this.fragment = DashboardFragment.newInstance());
     }

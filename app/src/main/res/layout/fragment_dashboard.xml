@@ -86,8 +86,9 @@
     </LinearLayout>
 
     <ListView
+        android:id="@+id/list_working_times"
         android:layout_gravity="fill"
-        android:background="@android:color/holo_blue_bright"
+        android:layout_height="0dp"
         android:layout_width="match_parent" />
 
 </GridLayout>

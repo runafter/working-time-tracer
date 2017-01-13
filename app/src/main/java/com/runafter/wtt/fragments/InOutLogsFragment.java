@@ -108,7 +108,8 @@ public class InOutLogsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, this + ".onResume");
-        this.handler.post(taskInitLogListView());
+        if (this.handler != null)
+            this.handler.post(taskInitLogListView());
     }
 
     @Override
