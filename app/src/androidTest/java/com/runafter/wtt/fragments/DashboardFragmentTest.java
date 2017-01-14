@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import io.realm.Realm;
@@ -32,12 +33,11 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static com.runafter.wtt.fragments.utils.Matchers.*;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.anything;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 
 /**
- * Created by runaf on 2017-01-14.
+ * Created by runafter on 2017-01-14.
  */
 @RunWith(AndroidJUnit4.class)
 public class DashboardFragmentTest {
@@ -52,8 +52,12 @@ public class DashboardFragmentTest {
     }
     @After
     public void tearDown() {
-        if (this.realm != null)
+        if (this.realm != null) {
+            realm.beginTransaction();
+            realm.deleteAll();
+            realm.commitTransaction();
             this.realm.close();
+        }
     }
 
     @Test
@@ -79,28 +83,52 @@ public class DashboardFragmentTest {
 
     @Test
     public void shouldUpdateDashboardWhenWorkingTimesUpdated() {
-        long lastWeekDayTime = lastWeekDayTime();
-        List<WorkingTime> wts = new ArrayList<>();
-        wts.add(updateWorkingTime(lastWeekDayTime, 0, 9, 1));
-        wts.add(updateWorkingTime(lastWeekDayTime, -1, 12, 2));
-        wts.add(updateWorkingTime(lastWeekDayTime, -2, 15, 3));
-        wts.add(updateWorkingTime(lastWeekDayTime, -3, 9, 4));
+        Calendar calendar = Calendar.getInstance();
+        Calendar fr = DateTimeUtils.firstDateTimeOfWeek(calendar);
+        Calendar to = DateTimeUtils.lastDateTimeOfWeek(calendar);
+        long lastWeekDayTime = to.getTimeInMillis();
 
-        int expected = 0;
-        for (WorkingTime wt : wts)
+        updateWorkingTime(lastWeekDayTime, 0, 9, 1, WorkingTime.WORKING_TYPE_NONE);
+        updateWorkingTime(lastWeekDayTime, -1, 12, 2, WorkingTime.WORKING_TYPE_HALF);
+        updateWorkingTime(lastWeekDayTime, -2, 15, 3);
+        updateWorkingTime(lastWeekDayTime, -3, 9, 4, WorkingTime.WORKING_TYPE_ALL);
+
+        List<WorkingTime> wts = findAll(fr, to);
+
+        int expectedWorkedTime = 0;
+        int expectedTarget = 0;
+        for (WorkingTime wt : wts) {
+            expectedTarget += wt.getWorkingTypeAsHours();
             if (wt.getWorkingTypeAsHours() > 0)
-                expected += DateTimeUtils.hoursOf(wt.getEnd() - wt.getStart());
+                expectedWorkedTime += DateTimeUtils.hoursOf(wt.getEnd() - wt.getStart());
+        }
 
-        String expectedWorkedTime = String.format("%02d:00:00", expected);
+        onView(withId(R.id.worked_time)).check(matches(withText(String.format("%02d:00:00", expectedWorkedTime))));
+        onView(withId(R.id.target_time)).check(matches(withText(String.format("%dH", expectedTarget))));
+        onView(withId(R.id.remain_time)).check(matches(withText(String.format("%02d:00:00", expectedTarget - expectedWorkedTime))));
+    }
 
-        onView(withId(R.id.worked_time)).check(matches(withText(expectedWorkedTime)));
+    private List<WorkingTime> findAll(Calendar fr, Calendar to) {
+        Iterator<WorkingTime> iterator = realm.where(WorkingTime.class)
+                .greaterThanOrEqualTo(WorkingTime.FIELD_DATE, fr.getTimeInMillis())
+                .lessThanOrEqualTo(WorkingTime.FIELD_DATE, to.getTimeInMillis())
+                .findAll().iterator();
+
+        List<WorkingTime> list = new ArrayList<>();
+        while (iterator.hasNext())
+            list.add(iterator.next());
+        return list;
     }
 
     private WorkingTime updateWorkingTime(long lastWeekDayTime, int offsetDate, int start, int hours) {
+        return updateWorkingTime(lastWeekDayTime, offsetDate, start, hours, null);
+    }
+    private WorkingTime updateWorkingTime(long lastWeekDayTime, int offsetDate, int start, int hours, String workingType) {
         WorkingTime workingTime = new WorkingTime();
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(lastWeekDayTime);
+        calendar = DateTimeUtils.minimumInDate(calendar);
 
         calendar.add(Calendar.DATE, offsetDate);
         workingTime.setDate(calendar.getTimeInMillis());
@@ -111,9 +139,13 @@ public class DashboardFragmentTest {
         calendar.add(Calendar.HOUR_OF_DAY, hours);
         workingTime.setEnd(calendar.getTimeInMillis());
 
-        WorkingTime old = realm.where(WorkingTime.class).equalTo(WorkingTime.FIELD_DATE, workingTime.getDate()).findFirst();
-        if (old != null)
-            workingTime.setWorkingType(old.getWorkingType());
+        if (workingType == null) {
+            WorkingTime old = realm.where(WorkingTime.class).equalTo(WorkingTime.FIELD_DATE, workingTime.getDate()).findFirst();
+            if (old != null)
+                workingTime.setWorkingType(old.getWorkingType());
+        } else {
+            workingTime.setWorkingType(workingType);
+        }
 
         realm.beginTransaction();
         Log.d("TEST", "insertOrUpdate " + toString(workingTime));

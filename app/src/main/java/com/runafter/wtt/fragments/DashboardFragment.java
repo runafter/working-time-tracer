@@ -17,7 +17,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.runafter.wtt.DateTimeUtils;
 import com.runafter.wtt.R;
 import com.runafter.wtt.WorkingTime;
 
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
@@ -54,10 +54,6 @@ public class DashboardFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String TAG = "Dashboard";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     private OnDashboardFragmentInteractionListener mListener;
     private ListView lvWorkingTimes;
@@ -263,12 +259,7 @@ public class DashboardFragment extends Fragment {
         public boolean updateWithoutNotify(WorkingTime n) {
             WorkingTime o = this.map.get(n.getDate());
             if (o != null && !o.equals(n)) {
-                Log.d(TAG, "Date        : " + o.getDate() + " => " + n.getDate());
-                Log.d(TAG, "InOffice    : " + o.getInOffice() + " => " + n.getInOffice());
-                Log.d(TAG, "OutOffice   : " + o.getOutOffice() + " => " + n.getOutOffice());
-                Log.d(TAG, "Start       : " + o.getStart() + " => " + n.getStart());
-                Log.d(TAG, "End         : " + o.getEnd() + " => " + n.getEnd());
-                Log.d(TAG, "WorkingType : " + o.getWorkingType() + " => " + n.getWorkingType());
+                //logDebugWorkingTimes(n, o);
 
                 o.setInOffice(n.getInOffice());
                 o.setOutOffice(n.getOutOffice());
@@ -290,28 +281,18 @@ public class DashboardFragment extends Fragment {
         }
     }
 
+//    private void logDebugWorkingTimes(WorkingTime n, WorkingTime o) {
+//        Log.d(TAG, "Date        : " + o.getDate() + " => " + n.getDate());
+//        Log.d(TAG, "InOffice    : " + o.getInOffice() + " => " + n.getInOffice());
+//        Log.d(TAG, "OutOffice   : " + o.getOutOffice() + " => " + n.getOutOffice());
+//        Log.d(TAG, "Start       : " + o.getStart() + " => " + n.getStart());
+//        Log.d(TAG, "End         : " + o.getEnd() + " => " + n.getEnd());
+//        Log.d(TAG, "WorkingType : " + o.getWorkingType() + " => " + n.getWorkingType());
+//    }
 
     private WorkingTimesAdapter workingTImesApdapter() {
         List<WorkingTime> list = new ArrayList<>();
         return new WorkingTimesAdapter(getActivity(), R.layout.listview_working_time_item, list);
-    }
-
-    private WorkingTime workingTimeOf(int dDay, int start, int end, String type) {
-        WorkingTime workingTIme = new WorkingTime();
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.DATE, cal.get(Calendar.DATE) + dDay);
-
-        workingTIme.setDate(cal.getTime().getTime());
-
-        cal.set(Calendar.HOUR, start);
-        workingTIme.setStart(cal.getTime().getTime());
-
-        cal.set(Calendar.HOUR, end);
-        workingTIme.setEnd(cal.getTime().getTime());
-
-        workingTIme.setWorkingType(type);
-
-        return workingTIme;
     }
 
     @Override
@@ -353,15 +334,16 @@ public class DashboardFragment extends Fragment {
         Calendar calendar = Calendar.getInstance();
         Calendar to = lastDateTimeOfWeek(calendar);
         Calendar fr = firstDateTimeOfWeek(calendar);
-        Log.d(TAG, "setUpDashboardUpdater " + DateTimeUtils.toString(fr) + " ~ " + DateTimeUtils.toString(to));
         RealmResults<WorkingTime> resultsThisWeekWorkingTime = realm.where(WorkingTime.class)
                 .lessThanOrEqualTo(WorkingTime.FIELD_DATE, to.getTimeInMillis())
                 .greaterThanOrEqualTo(WorkingTime.FIELD_DATE, fr.getTimeInMillis())
                 .findAllAsync();
+        final AtomicInteger seq = new AtomicInteger(0);
         resultsThisWeekWorkingTime
                 .addChangeListener(new RealmChangeListener<RealmResults<WorkingTime>>() {
                     @Override
                     public void onChange(RealmResults<WorkingTime> result) {
+                        int s = seq.getAndIncrement();
                         Iterator<WorkingTime> iterator = result.iterator();
                         Dashboard dashboard = new Dashboard();
                         dashboard.workedTime = 0;
@@ -380,7 +362,6 @@ public class DashboardFragment extends Fragment {
                         }
 
                         dashboard.remain = hoursToMilliseconds(dashboard.target) - dashboard.workedTime;
-
                         updateDashboard(dashboard);
                     }
                 });
@@ -404,18 +385,8 @@ public class DashboardFragment extends Fragment {
     private String formatHour(int hour) {
         return String.format("%dH", hour);
     }
-
-    private String formatTime(long time) {
-        return timeFormat.format(time);
-    }
-    private String formatElapseTime(long time) {
-        return timeFormat.format(timeZoneOffset + time);
-    }
-
     private void startTimer() {
-
         timer = new Timer();
-
     }
     private void scheduleTimerTask() {
         timer.schedule(timerTask(), 1000);

@@ -13,20 +13,14 @@ public class DateTimeUtils {
         cal.setTime(calendar.getTime());
         int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
         cal.add(Calendar.DATE, getLastDayOfWeek(cal) - dayOfWeek);
-        int fields[] = new int[] {Calendar.HOUR_OF_DAY, Calendar.MINUTE, Calendar.SECOND, Calendar.MILLISECOND};
-        for (int field : fields)
-            cal.set(field, cal.getMaximum(field));
-        return cal;
+        return minimumInDate(cal);
     }
     public static Calendar firstDateTimeOfWeek(Calendar calendar) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(calendar.getTime());
         int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
         cal.add(Calendar.DATE, cal.getFirstDayOfWeek() - dayOfWeek);
-        int fields[] = new int[] {Calendar.HOUR_OF_DAY, Calendar.MINUTE, Calendar.SECOND, Calendar.MILLISECOND};
-        for (int field : fields)
-            cal.set(field, 0);
-        return cal;
+        return minimumInDate(cal);
     }
 
     public static int getLastDayOfWeek(Calendar calendar) {
@@ -61,5 +55,12 @@ public class DateTimeUtils {
 
     public static int hoursOf(long milliseconds) {
         return (int)(milliseconds / (1000L * 60L * 60L));
+    }
+
+    public static String formatElapseTime(long milliseconds) {
+        final int seconds = (int)(milliseconds %  60000L) /  1000;
+        final int minutes = (int)(milliseconds % 360000L) / 60000;
+        final int hours = hoursOf(milliseconds);
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 }
