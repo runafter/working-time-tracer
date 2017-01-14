@@ -23,8 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import io.realm.Realm;
 import me.everything.android.ui.overscroll.IOverScrollDecor;
@@ -289,23 +287,30 @@ public class DashboardFragment extends Fragment {
     }
 
     private void addWorkingTimes(int offsetWeek) {
-        new WorkingTimesFetchAyncTask(this.handler, workingTimesAdapter).execute(offsetWeek, 2);
+        new WorkingTimesFetchAsyncTask(this.handler, workingTimesAdapter).execute(offsetWeek, 2);
     }
 
-    public static class WorkingTimesFetchAyncTask extends AsyncTask<Integer, Integer, Integer> {
+    public static class WorkingTimesFetchAsyncTask extends AsyncTask<Integer, Integer, List<WorkingTIme>> {
         private final Handler handler;
         private final WorkingTimesAdapter workingTimesAdapter;
         private long today;
         private Calendar firstDateTimeOfThisWeek;
         private Calendar lastDateTimeOfThisWeek;
 
-        public WorkingTimesFetchAyncTask(Handler handler, WorkingTimesAdapter workingTimesAdapter) {
+        public WorkingTimesFetchAsyncTask(Handler handler, WorkingTimesAdapter workingTimesAdapter) {
             super();
             this.handler = handler;
             this.workingTimesAdapter = workingTimesAdapter;
         }
+
         @Override
-        protected Integer doInBackground(Integer... params) {
+        protected void onPostExecute(List<WorkingTIme> workingTimes) {
+            super.onPostExecute(workingTimes);
+            workingTimesAdapter.addAll(workingTimes);
+        }
+
+        @Override
+        protected List<WorkingTIme> doInBackground(Integer... params) {
             Calendar calendar = Calendar.getInstance();
 
             calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -322,25 +327,14 @@ public class DashboardFragment extends Fragment {
 
             calendar.set(Calendar.DAY_OF_WEEK, getLastDayOfWeek(calendar));
 
-            int count = 0;
-
             final List<WorkingTIme> workingTimes = new ArrayList<>();
             for (int w = 0 ; w < weekCount ; w++) {
                 for (int d = 0; d < 7; d++) {
                     workingTimes.add(workingTimeOf(calendar));
                     calendar.add(Calendar.DATE, -1);
-                    count++;
                 }
             }
-
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    workingTimesAdapter.addAll(workingTimes);
-                }
-            });
-
-            return count;
+            return workingTimes;
         }
 
         private Calendar lastDateTimeOfWeek(Calendar calendar) {
