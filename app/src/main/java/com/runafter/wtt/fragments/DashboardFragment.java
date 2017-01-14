@@ -17,18 +17,30 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.runafter.wtt.DateTimeUtils;
 import com.runafter.wtt.R;
+import com.runafter.wtt.WorkingTime;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
+import io.realm.RealmResults;
 import me.everything.android.ui.overscroll.IOverScrollDecor;
 import me.everything.android.ui.overscroll.IOverScrollState;
 import me.everything.android.ui.overscroll.ListenerStubs;
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
+
+import static com.runafter.wtt.DateTimeUtils.*;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -52,6 +64,14 @@ public class DashboardFragment extends Fragment {
     private Realm realm;
     private Handler handler;
     private WorkingTimesAdapter workingTimesAdapter;
+    private Timer timer;
+    private TextView tvRemainTime;
+    private TextView tvTargetTime;
+    private TextView tvWorkedTime;
+    private TextView tvInOfficeTime;
+    private TextView tvOutOfficeTime;
+    private SimpleDateFormat timeFormat;
+    private long timeZoneOffset;
 
     public DashboardFragment() {
         // Required empty public constructor
@@ -75,6 +95,8 @@ public class DashboardFragment extends Fragment {
         Log.d(TAG, this + ".onCreate");
         this.realm = Realm.getDefaultInstance();
         this.handler = new Handler();
+        this.timeFormat = new SimpleDateFormat("HH:mm:ss");
+        this.timeZoneOffset = timeZoneOffset();
     }
 
     @Override
@@ -83,6 +105,12 @@ public class DashboardFragment extends Fragment {
         // Inflate the layout for this fragment
         View fragment = inflater.inflate(R.layout.fragment_dashboard, container, false);
         this.lvWorkingTimes = (ListView) fragment.findViewById(R.id.list_working_times);
+        this.tvRemainTime = (TextView)fragment.findViewById(R.id.remain_time);
+        this.tvTargetTime = (TextView)fragment.findViewById(R.id.target_time);
+        this.tvWorkedTime = (TextView)fragment.findViewById(R.id.worked_time);
+        this.tvInOfficeTime = (TextView)fragment.findViewById(R.id.in_office_time);
+        this.tvOutOfficeTime = (TextView)fragment.findViewById(R.id.out_office_time);
+
         Log.d(TAG, this + ".onCreateView");
         IOverScrollDecor iOverScrollDecor = OverScrollDecoratorHelper.setUpOverScroll(lvWorkingTimes);
         iOverScrollDecor.setOverScrollStateListener(new ListenerStubs.OverScrollStateListenerStub() {
@@ -120,22 +148,61 @@ public class DashboardFragment extends Fragment {
     }
 
 
-    public class WorkingTimesAdapter extends ArrayAdapter<WorkingTIme> {
+    public class WorkingTimesAdapter extends ArrayAdapter<WorkingTime> {
         private final Activity activity;
         private final SimpleDateFormat dateFormat;
         private final SimpleDateFormat timeFormat;
         private final long timeZoneOffset;
+        private Map<Long, WorkingTime> map = new HashMap<>();
 
-        public WorkingTimesAdapter(Activity activity, int textViewResourceId, List<WorkingTIme> objects) {
+        public WorkingTimesAdapter(Activity activity, int textViewResourceId, List<WorkingTime> objects) {
             super(activity, textViewResourceId, objects);
             this.activity = activity;
             this.dateFormat = new SimpleDateFormat("MM-dd");
             this.timeFormat = new SimpleDateFormat("HH:mm");
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(0, 0, 0, 0,0, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
-            calendar.getTimeInMillis();
-            this.timeZoneOffset = calendar.getTimeInMillis();
+            this.timeZoneOffset = timeZoneOffset();
+        }
+        private void debug(String prefix, long  time) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            Log.d(TAG, prefix + " : " + sdf.format(time));
+        }
+
+        @Override
+        public void add(WorkingTime object) {
+            super.add(object);
+            map.put(object.getDate(), object);
+        }
+
+        @Override
+        public void addAll(Collection<? extends WorkingTime> collection) {
+            super.addAll(collection);
+            for (WorkingTime i : collection)
+                map.put(i.getDate(), i);
+        }
+
+        @Override
+        public void addAll(WorkingTime... items) {
+            super.addAll(items);
+            for (WorkingTime item : items)
+                map.put(item.getDate(), item);
+        }
+
+        @Override
+        public void insert(WorkingTime object, int index) {
+            super.insert(object, index);
+            map.put(object.getDate(), object);
+        }
+
+        @Override
+        public void remove(WorkingTime object) {
+            super.remove(object);
+            map.remove(object.getDate());
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            map.clear();
         }
 
         @NonNull
@@ -164,31 +231,54 @@ public class DashboardFragment extends Fragment {
             }
 
             /** Set data to your Views. */
-            WorkingTIme item = getItem(position);
-            view.date.setText(dateFormat.format(item.date));
-            view.start.setText(timeFormat.format(item.start));
-            view.end.setText(timeFormat.format(item.end));
-            view.workedTime.setText(timeFormat.format(timeZoneOffset + item.end - item.start));
-            view.workingTypes.setText(item.workingType);
+            WorkingTime item = getItem(position);
+            //debug("start:", item.getStart());
+            view.date.setText(dateFormat.format(item.getDate()));
+            view.start.setText(timeFormat.format(item.getStart()));
+            view.end.setText(timeFormat.format(item.getEnd()));
+            view.workedTime.setText(timeFormat.format(timeZoneOffset + item.getEnd() - item.getStart()));
+            view.workingTypes.setText(item.getWorkingType());
 
             applyStyles(rowView, view, item);
             return rowView;
         }
 
-        private void applyStyles(View rowView, ViewHolder view, WorkingTIme item) {
-            if ((item.style & WorkingTIme.STYLE_SUNDAY) != 0)
+        private void applyStyles(View rowView, ViewHolder view, WorkingTime item) {
+            int style = item.getStyle();
+            if ((style & WorkingTime.STYLE_SUNDAY) != 0)
                 view.date.setTextColor(Color.RED);
-            if ((item.style & WorkingTIme.STYLE_SATURDAY) != 0)
+            if ((style & WorkingTime.STYLE_SATURDAY) != 0)
                 view.date.setTextColor(Color.BLUE);
-            if ((item.style & WorkingTIme.STYLE_WORK_DATE) == 0)
+            if ((style & WorkingTime.STYLE_WORK_DATE) == 0)
                 rowView.setBackgroundColor(Color.LTGRAY);
-            if ((item.style & WorkingTIme.STYLE_WEEK_PAST) != 0) {
+            if ((style & WorkingTime.STYLE_WEEK_PAST) != 0) {
                 view.date.setTextColor(Color.GRAY);
                 view.start.setTextColor(Color.GRAY);
                 view.end.setTextColor(Color.GRAY);
                 view.workedTime.setTextColor(Color.GRAY);
                 view.workingTypes.setTextColor(Color.GRAY);
             }
+        }
+
+        public boolean updateWithoutNotify(WorkingTime n) {
+            WorkingTime o = this.map.get(n.getDate());
+            if (o != null && !o.equals(n)) {
+                Log.d(TAG, "Date        : " + o.getDate() + " => " + n.getDate());
+                Log.d(TAG, "InOffice    : " + o.getInOffice() + " => " + n.getInOffice());
+                Log.d(TAG, "OutOffice   : " + o.getOutOffice() + " => " + n.getOutOffice());
+                Log.d(TAG, "Start       : " + o.getStart() + " => " + n.getStart());
+                Log.d(TAG, "End         : " + o.getEnd() + " => " + n.getEnd());
+                Log.d(TAG, "WorkingType : " + o.getWorkingType() + " => " + n.getWorkingType());
+
+                o.setInOffice(n.getInOffice());
+                o.setOutOffice(n.getOutOffice());
+                o.setStart(n.getStart());
+                o.setEnd(n.getEnd());
+                o.setWorkingType(n.getWorkingType());
+
+                return true;
+            } else
+                return false;
         }
 
         protected class ViewHolder {
@@ -202,48 +292,29 @@ public class DashboardFragment extends Fragment {
 
 
     private WorkingTimesAdapter workingTImesApdapter() {
-        List<WorkingTIme> list = new ArrayList<>();
+        List<WorkingTime> list = new ArrayList<>();
         return new WorkingTimesAdapter(getActivity(), R.layout.listview_working_time_item, list);
     }
 
-    private WorkingTIme workingTimeOf(int dDay, int start, int end, String type) {
-        WorkingTIme workingTIme = new WorkingTIme();
+    private WorkingTime workingTimeOf(int dDay, int start, int end, String type) {
+        WorkingTime workingTIme = new WorkingTime();
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.DATE, cal.get(Calendar.DATE) + dDay);
 
-        workingTIme.date = cal.getTime().getTime();
+        workingTIme.setDate(cal.getTime().getTime());
 
         cal.set(Calendar.HOUR, start);
-        workingTIme.start = cal.getTime().getTime();
+        workingTIme.setStart(cal.getTime().getTime());
 
         cal.set(Calendar.HOUR, end);
-        workingTIme.end = cal.getTime().getTime();
+        workingTIme.setEnd(cal.getTime().getTime());
 
-        workingTIme.workingType = type;
+        workingTIme.setWorkingType(type);
 
         return workingTIme;
     }
 
-    public static class WorkingTIme {
-        public static final String WORKING_TYPE_ALL = "8H";
-        public static final String WORKING_TYPE_NONE = "0H";
-        public static final int STYLE_WORK_DATE = 1 << 1;
-        public static final int STYLE_SATURDAY = 1 << 2;
-        public static final int STYLE_SUNDAY = 1 << 3;
-        public static final int STYLE_HOLIDAY = 1 << 4;
-        public static final int STYLE_WEEK_CURRENT = 1 << 5;
-        public static final int STYLE_WEEK_PAST = 1 << 6;
-        public static final int STYLE_WEEK_FUTURE = 1 << 7;
-        public static final int STYLE_TODAY = 1 << 8;
-        private long date;
-        private long start;
-        private long end;
-        private String workingType;
-
-        private int style;
-    }
-
-     @Override
+    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         if (context instanceof OnDashboardFragmentInteractionListener) {
@@ -273,6 +344,103 @@ public class DashboardFragment extends Fragment {
         super.onResume();
         Log.d(TAG, this + ".onResume");
         this.handler.post(taskSetWorkingTimeAdapter());
+        startTimer();
+        setUpDashboardUpdater();
+        //setUpWorkingTImeListUpdater();
+    }
+
+    private void setUpDashboardUpdater() {
+        Calendar calendar = Calendar.getInstance();
+        Calendar to = lastDateTimeOfWeek(calendar);
+        Calendar fr = firstDateTimeOfWeek(calendar);
+        Log.d(TAG, "setUpDashboardUpdater " + DateTimeUtils.toString(fr) + " ~ " + DateTimeUtils.toString(to));
+        RealmResults<WorkingTime> resultsThisWeekWorkingTime = realm.where(WorkingTime.class)
+                .lessThanOrEqualTo(WorkingTime.FIELD_DATE, to.getTimeInMillis())
+                .greaterThanOrEqualTo(WorkingTime.FIELD_DATE, fr.getTimeInMillis())
+                .findAllAsync();
+        resultsThisWeekWorkingTime
+                .addChangeListener(new RealmChangeListener<RealmResults<WorkingTime>>() {
+                    @Override
+                    public void onChange(RealmResults<WorkingTime> result) {
+                        Iterator<WorkingTime> iterator = result.iterator();
+                        Dashboard dashboard = new Dashboard();
+                        dashboard.workedTime = 0;
+                        dashboard.target = 0;
+                        dashboard.inOfficeTime = 0;
+                        dashboard.outOfficeTime = 0;
+
+                        while (iterator.hasNext()) {
+                            WorkingTime workingTime = iterator.next();
+                            int hoursWorkingType = WorkingTime.hoursValueOf(workingTime.getWorkingType());
+                            if (hoursWorkingType > 0)
+                                dashboard.workedTime += workingTime.getEnd() - workingTime.getStart();
+                            dashboard.target += hoursWorkingType;
+                            dashboard.inOfficeTime += workingTime.getInOffice();
+                            dashboard.outOfficeTime += workingTime.getOutOffice();
+                        }
+
+                        dashboard.remain = hoursToMilliseconds(dashboard.target) - dashboard.workedTime;
+
+                        updateDashboard(dashboard);
+                    }
+                });
+
+    }
+
+    private void updateDashboard(final Dashboard dashboard) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                tvRemainTime.setText(formatElapseTime(dashboard.remain));
+                tvTargetTime.setText(formatHour(dashboard.target));
+                tvWorkedTime.setText(formatElapseTime(dashboard.workedTime));
+                tvInOfficeTime.setText(formatElapseTime(dashboard.inOfficeTime));
+                tvOutOfficeTime.setText(formatElapseTime(dashboard.outOfficeTime));
+            }
+        });
+
+    }
+
+    private String formatHour(int hour) {
+        return String.format("%dH", hour);
+    }
+
+    private String formatTime(long time) {
+        return timeFormat.format(time);
+    }
+    private String formatElapseTime(long time) {
+        return timeFormat.format(timeZoneOffset + time);
+    }
+
+    private void startTimer() {
+
+        timer = new Timer();
+
+    }
+    private void scheduleTimerTask() {
+        timer.schedule(timerTask(), 1000);
+    }
+
+    private boolean isInOffice() {
+        return true;
+    }
+
+
+    @NonNull
+    private TimerTask timerTask() {
+        return new TimerTask() {
+
+            @Override
+            public void run() {
+                new UpdateWorkTimeAsyncTask().execute(isInOffice());
+                scheduleTimerTask();
+            }
+        };
+    }
+
+    private void stopTimer() {
+        timer.cancel();
+        timer.purge();
     }
 
     private Runnable taskSetWorkingTimeAdapter() {
@@ -287,36 +455,68 @@ public class DashboardFragment extends Fragment {
     }
 
     private void addWorkingTimes(int offsetWeek) {
-        new WorkingTimesFetchAsyncTask(this.handler, workingTimesAdapter).execute(offsetWeek, 2);
+        new WorkingTimesFetchAsyncTask(workingTimesAdapter).execute(offsetWeek, 2);
     }
 
-    public static class WorkingTimesFetchAsyncTask extends AsyncTask<Integer, Integer, List<WorkingTIme>> {
-        private final Handler handler;
+    public static class Dashboard {
+        private long remain;
+        private int target;
+        private long workedTime;
+        private long inOfficeTime;
+        private long outOfficeTime;
+        private WorkingTime today;
+    }
+
+    public static class UpdateWorkTimeAsyncTask extends AsyncTask<Object, Integer, Dashboard> {
+
+        @Override
+        protected Dashboard doInBackground(Object... objects) {
+            Boolean inOffice = (Boolean)objects[0];
+            Dashboard dashboard = (Dashboard)objects[1];
+            WorkingTime workingTime = dashboard.today;
+            long time = Calendar.getInstance().getTimeInMillis();
+            if (inOffice != null && inOffice) {
+                Realm realm = Realm.getDefaultInstance();
+                workingTime = realm.where(WorkingTime.class).equalTo("date", workingTime.getDate()).findFirst();
+                workingTime.setEnd(time);
+            } else {
+
+            }
+            return dashboard;
+        }
+
+        @Override
+        protected void onPostExecute(Dashboard dashboard) {
+            super.onPostExecute(dashboard);
+        }
+    }
+
+    public static class WorkingTimesFetchAsyncTask extends AsyncTask<Integer, Integer, List<WorkingTime>> {
         private final WorkingTimesAdapter workingTimesAdapter;
         private long today;
         private Calendar firstDateTimeOfThisWeek;
         private Calendar lastDateTimeOfThisWeek;
+        private Realm realm;
 
-        public WorkingTimesFetchAsyncTask(Handler handler, WorkingTimesAdapter workingTimesAdapter) {
+        public WorkingTimesFetchAsyncTask(WorkingTimesAdapter workingTimesAdapter) {
             super();
-            this.handler = handler;
+
             this.workingTimesAdapter = workingTimesAdapter;
         }
 
         @Override
-        protected void onPostExecute(List<WorkingTIme> workingTimes) {
+        protected void onPostExecute(List<WorkingTime> workingTimes) {
             super.onPostExecute(workingTimes);
             workingTimesAdapter.addAll(workingTimes);
+            setUpWorkingTimeAdapterUpdater(workingTimes);
         }
 
         @Override
-        protected List<WorkingTIme> doInBackground(Integer... params) {
+        protected List<WorkingTime> doInBackground(Integer... params) {
+            this.realm = Realm.getDefaultInstance();
             Calendar calendar = Calendar.getInstance();
 
-            calendar.set(Calendar.HOUR_OF_DAY, 0);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
+            calendar = minimumInDate(calendar);
             this.today = calendar.getTimeInMillis();
             firstDateTimeOfThisWeek = firstDateTimeOfWeek(calendar);
             lastDateTimeOfThisWeek = lastDateTimeOfWeek(calendar);
@@ -327,71 +527,105 @@ public class DashboardFragment extends Fragment {
 
             calendar.set(Calendar.DAY_OF_WEEK, getLastDayOfWeek(calendar));
 
-            final List<WorkingTIme> workingTimes = new ArrayList<>();
+            final List<WorkingTime> workingTimes = new ArrayList<>();
+            realm.beginTransaction();
             for (int w = 0 ; w < weekCount ; w++) {
                 for (int d = 0; d < 7; d++) {
                     workingTimes.add(workingTimeOf(calendar));
                     calendar.add(Calendar.DATE, -1);
                 }
             }
+            realm.commitTransaction();
+
+
             return workingTimes;
         }
 
-        private Calendar lastDateTimeOfWeek(Calendar calendar) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(calendar.getTime());
-            cal.set(Calendar.DAY_OF_WEEK, getLastDayOfWeek(cal));
-            int fields[] = new int[] {Calendar.HOUR, Calendar.MINUTE, Calendar.SECOND, Calendar.MILLISECOND};
-            for (int field : fields)
-                cal.set(field, cal.getMaximum(field));
-            return cal;
+        private void setUpWorkingTimeAdapterUpdater(List<WorkingTime> workingTimes) {
+            int count = workingTimes.size();
+            if (count == 0) {
+                Log.d(TAG, "count " + count);
+                return;
+            }
+            WorkingTime first = workingTimes.get(count - 1);
+            WorkingTime last = workingTimes.get(0);
+            Realm realm = Realm.getDefaultInstance();
+
+            realm.where(WorkingTime.class)
+                    .greaterThanOrEqualTo("date", first.getDate())
+                    .lessThanOrEqualTo("date", last.getDate())
+                    .findAllAsync()
+                    .addChangeListener(new RealmChangeListener<RealmResults<WorkingTime>>() {
+                          @Override
+                          public void onChange(RealmResults<WorkingTime> element) {
+                              Iterator<WorkingTime> iterator = element.iterator();
+                              boolean changed = false, c;
+                              while (iterator.hasNext()) {
+                                  WorkingTime e = iterator.next();
+                                  c = workingTimesAdapter.updateWithoutNotify(e);
+                                  changed |= c;
+                              }
+                              if (changed)
+                                  workingTimesAdapter.notifyDataSetChanged();
+                          }
+                     }
+            );
+            realm.close();
         }
 
-        private Calendar firstDateTimeOfWeek(Calendar calendar) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(calendar.getTime());
-            cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
-            return cal;
-        }
-
-        private int getLastDayOfWeek(Calendar calendar) {
-            return (calendar.getFirstDayOfWeek() + 7 - 1) % 7;
-        }
-
-        private WorkingTIme workingTimeOf(Calendar calendar) {
-            WorkingTIme workingTIme = new WorkingTIme();
-            workingTIme.date = calendar.getTime().getTime();
-            workingTIme.style = styleOf(calendar);
-            workingTIme.start = workingTIme.date;
-            workingTIme.end = workingTIme.date;
-
-            if (isWorkDate(calendar))
-                workingTIme.workingType = WorkingTIme.WORKING_TYPE_ALL;
-            else
-                workingTIme.workingType = WorkingTIme.WORKING_TYPE_NONE;
+        private WorkingTime workingTimeOf(Calendar calendar) {
+            long time = calendar.getTimeInMillis();
+            WorkingTime workingTIme = realm.where(WorkingTime.class).equalTo("date", time).findFirst();
+            if (workingTIme == null) {
+                workingTIme = new WorkingTime();
+                workingTIme.setDate(time);
+                workingTIme.setStart(time);
+                workingTIme.setEnd(time);
+                if (isWorkDate(calendar))
+                    workingTIme.setWorkingType(WorkingTime.WORKING_TYPE_ALL);
+                else
+                    workingTIme.setWorkingType(WorkingTime.WORKING_TYPE_NONE);
+                realm.insert(workingTIme);
+                //debug("db ", calendar);
+            } else {
+                workingTIme = copyOf(workingTIme);
+                //debug("new ", calendar);
+            }
+            workingTIme.setStyle(styleOf(calendar));
 
             return workingTIme;
+        }
+
+        private WorkingTime copyOf(WorkingTime src) {
+            WorkingTime dst = new WorkingTime();
+            dst.setWorkingType(src.getWorkingType());
+            dst.setStart(src.getStart());
+            dst.setEnd(src.getEnd());
+            dst.setDate(src.getDate());
+            dst.setInOffice(src.getInOffice());
+            dst.setOutOffice(dst.getOutOffice());
+            return dst;
         }
 
         private int styleOf(Calendar calendar) {
             boolean workDate = isWorkDate(calendar);
             int style = 0;
             if (workDate)
-                style |= WorkingTIme.STYLE_WORK_DATE;
+                style |= WorkingTime.STYLE_WORK_DATE;
             if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY)
-                style |= WorkingTIme.STYLE_SATURDAY;
+                style |= WorkingTime.STYLE_SATURDAY;
             if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
-                style |= WorkingTIme.STYLE_SUNDAY;
+                style |= WorkingTime.STYLE_SUNDAY;
             if (isHoliday(calendar))
-                style |= WorkingTIme.STYLE_HOLIDAY;
+                style |= WorkingTime.STYLE_HOLIDAY;
             if (isCurrentWeek(calendar))
-                style |= WorkingTIme.STYLE_WEEK_CURRENT;
+                style |= WorkingTime.STYLE_WEEK_CURRENT;
             if (isPastWeek(calendar))
-                style |= WorkingTIme.STYLE_WEEK_PAST;
+                style |= WorkingTime.STYLE_WEEK_PAST;
             if (isFutureWeek(calendar))
-                style |= WorkingTIme.STYLE_WEEK_FUTURE;
+                style |= WorkingTime.STYLE_WEEK_FUTURE;
             if (isToday(calendar))
-                style |= WorkingTIme.STYLE_TODAY;
+                style |= WorkingTime.STYLE_TODAY;
             return style;
         }
 
@@ -443,4 +677,6 @@ public class DashboardFragment extends Fragment {
         // TODO: Update argument type and name
         void onDashboardFragmentInteraction(Uri uri);
     }
+
+
 }

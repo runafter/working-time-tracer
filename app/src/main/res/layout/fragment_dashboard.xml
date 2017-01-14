@@ -18,7 +18,8 @@
             android:text="remain:"
             android:layout_marginRight="10dp" />
         <TextView
-            android:text="02:14:05"
+            android:id="@+id/remain_time"
+            android:text="--:--:--"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:textSize="70sp"
@@ -40,9 +41,10 @@
                 android:text="target"
                 android:layout_marginRight="10dp" />
             <TextView
+                android:id="@+id/target_time"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:text="40H"
+                android:text="-H"
                 android:gravity="right"
                 android:layout_gravity="fill"
                 />
@@ -52,9 +54,10 @@
                 android:text="worked"
                 android:layout_marginRight="10dp" />
             <TextView
+                android:id="@+id/worked_time"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:text="37:45:55"
+                android:text="--:--:--"
                 android:gravity="right"
                 android:layout_gravity="fill"
                 />
@@ -64,9 +67,10 @@
                 android:text="in office"
                 android:layout_marginRight="10dp" />
             <TextView
+                android:id="@+id/in_office_time"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:text="30:22:55"
+                android:text="--:--:--"
                 android:gravity="right"
                 android:layout_gravity="fill"
                 />
@@ -76,9 +80,10 @@
                 android:text="not in office"
                 android:layout_marginRight="10dp" />
             <TextView
+                android:id="@+id/out_office_time"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:text="03:22:10"
+                android:text="--:--:--"
                 android:gravity="right"
                 android:layout_gravity="fill"
                 />
