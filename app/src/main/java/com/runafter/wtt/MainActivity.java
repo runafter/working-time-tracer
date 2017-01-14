@@ -79,19 +79,29 @@ public class MainActivity extends AppCompatActivity
 
     private void initFragment() {
         Log.d(TAG, "initFragment");
-        FragmentManager fm = getFragmentManager();
-        FragmentTransaction fragmentTransaction = fm.beginTransaction();
-        fragmentTransaction.add(R.id.frame, DashboardFragment.newInstance());
-        fragmentTransaction.commit();
+        replaceFragment(DashboardFragment.newInstance());
     }
 
     private void replaceFragment(Fragment fragment) {
+        if (this.fragment == fragment || (this.fragment != null && this.fragment.getClass() == fragment.getClass()))
+            return;
+
         Log.d(TAG, "replaceFragment " + fragment);
         FragmentManager fm = getFragmentManager();
+
+        String tag = fragment.getClass().getName();
+        Fragment lastFragment = fm.findFragmentByTag(tag);
         FragmentTransaction fragmentTransaction = fm.beginTransaction();
-        fragmentTransaction.replace(R.id.frame, fragment);
-        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+        if (this.fragment != null) {
+            if (lastFragment != null)
+                fragment = lastFragment;
+            fragmentTransaction.replace(R.id.frame, fragment, tag);
+            fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+        } else
+            fragmentTransaction.add(R.id.frame, fragment, tag);
+        this.fragment = fragment;
         fragmentTransaction.commit();
+
     }
 
     private DrawerLayout.DrawerListener drawerListener() {
@@ -205,14 +215,12 @@ public class MainActivity extends AppCompatActivity
 
     private void viewInOutLogsFragrment() {
         Log.d(TAG, "viewInOutLogsFragrment");
-        if (!(this.fragment instanceof InOutLogsFragment))
-            replaceFragment(this.fragment = InOutLogsFragment.newInstance());
+        replaceFragment(InOutLogsFragment.newInstance());
     }
 
     private void viewDashboardFragment() {
         Log.d(TAG, "viewDashboardFragment");
-        if (!(this.fragment instanceof DashboardFragment))
-            replaceFragment(this.fragment = DashboardFragment.newInstance());
+        replaceFragment(DashboardFragment.newInstance());
     }
 
     private void openMonitorPatternUpdateDialong() {

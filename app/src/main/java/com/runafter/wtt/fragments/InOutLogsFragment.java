@@ -117,7 +117,8 @@ public class InOutLogsFragment extends Fragment {
         super.onDetach();
         Log.d(TAG, this + ".onDetach");
         mListener = null;
-        realm.close();
+        if (realm != null)
+            realm.close();
     }
 
     @Override
