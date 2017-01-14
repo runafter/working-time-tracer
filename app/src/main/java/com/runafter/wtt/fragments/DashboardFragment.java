@@ -13,8 +13,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextClock;
 import android.widget.TextView;
 
 import com.runafter.wtt.R;
@@ -22,8 +20,12 @@ import com.runafter.wtt.R;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
+
+import me.everything.android.ui.overscroll.IOverScrollDecor;
+import me.everything.android.ui.overscroll.IOverScrollState;
+import me.everything.android.ui.overscroll.ListenerStubs;
+import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -36,9 +38,7 @@ import java.util.List;
 public class DashboardFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-    private static final String TAG = "DF";
+    private static final String TAG = "Dashboard";
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -70,10 +70,6 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
         Log.d(TAG, this + ".onCreate");
     }
 
@@ -85,7 +81,39 @@ public class DashboardFragment extends Fragment {
         this.lvWorkingTimes = (ListView) fragment.findViewById(R.id.list_working_times);
         this.lvWorkingTimes.setAdapter(workingTImesApdapter());
         Log.d(TAG, this + ".onCreateView");
+        IOverScrollDecor iOverScrollDecor = OverScrollDecoratorHelper.setUpOverScroll(lvWorkingTimes);
+        iOverScrollDecor.setOverScrollStateListener(new ListenerStubs.OverScrollStateListenerStub() {
+            @Override
+            public void onOverScrollStateChange(IOverScrollDecor decor, int oldState, int newState) {
+                super.onOverScrollStateChange(decor, oldState, newState);
+               
+                Log.d(TAG, "onOverScrollStateChange oldState[" + oldState + ":" + overScrollStateOf(oldState) + "] newState[" + newState + ":" + overScrollStateOf(newState) + "]");
+            }
+        });
+        iOverScrollDecor.setOverScrollUpdateListener(new ListenerStubs.OverScrollUpdateListenerStub(){
+            @Override
+            public void onOverScrollUpdate(IOverScrollDecor decor, int state, float offset) {
+                super.onOverScrollUpdate(decor, state, offset);
+                
+                Log.d(TAG, "onOverScrollUpdate state[" + state + ":" + overScrollStateOf(state) + "] offset[" + offset + "]");
+            }
+        });
         return fragment;
+    }
+
+    private String overScrollStateOf(int overScrollState) {
+        switch (overScrollState) {
+            case IOverScrollState.STATE_BOUNCE_BACK:
+                return "STATE_BOUNCE_BACK";
+            case IOverScrollState.STATE_DRAG_END_SIDE:
+                return "STATE_DRAG_END_SIDE";
+            case IOverScrollState.STATE_DRAG_START_SIDE:
+                return "STATE_DRAG_START_SIDE";
+            case IOverScrollState.STATE_IDLE:
+                return "STATE_IDLE";
+            default:
+                return "unknown";
+        }
     }
 
 

@@ -38,8 +38,11 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.android.support:design:25.1.0'
     compile 'com.android.support:gridlayout-v7:25.1.0'
-    compile 'io.realm:android-adapters:1.4.1'
     compile 'com.android.support:support-v4:25.1.0'
+
+    compile 'io.realm:android-adapters:1.4.1'
+    compile 'me.everything:overscroll-decor-android:1.0.4'
+
     testCompile 'junit:junit:4.12'
     testCompile 'org.robolectric:robolectric:3.2'
 }
