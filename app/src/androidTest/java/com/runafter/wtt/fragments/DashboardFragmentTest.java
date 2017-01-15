@@ -31,7 +31,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static com.runafter.wtt.fragments.utils.Matchers.*;
+import static com.runafter.wtt.utils.Matchers.*;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -48,17 +48,23 @@ public class DashboardFragmentTest {
 
     @Before
     public void setUp() {
+        Log.d(TAG, "DashboardFragmentTest.setUp()");
         Realm.init(mActivityRule.getActivity());
         this.realm = Realm.getDefaultInstance();
+        Log.d(TAG, "DashboardFragmentTest.setUp() finish");
     }
     @After
     public void tearDown() {
+        Log.d(TAG, "DashboardFragmentTest.tearDown()");
         if (this.realm != null) {
+            Log.d(TAG, "DashboardFragmentTest.tearDown() deleteAll");
             realm.beginTransaction();
             realm.deleteAll();
             realm.commitTransaction();
+            Log.d(TAG, "DashboardFragmentTest.tearDown() deleteAll finish");
             this.realm.close();
         }
+        Log.d(TAG, "DashboardFragmentTest.tearDown() finish");
     }
 
     @Test
@@ -70,8 +76,11 @@ public class DashboardFragmentTest {
     @Test
     public void shouldDisplayWorkedTimeInList() {
         Log.d(TAG, "shouldDisplayWorkedTimeInList");
+        onView(withId(R.id.list_working_times)).check(matches(isDisplayed())).check(matches(withListSizeLeast(5)));
+        Log.d(TAG, "shouldDisplayWorkedTimeInList waiting finish");
+
         long lastWeekDayTime = lastWeekDayTime();
-        updateWorkingTime(lastWeekDayTime, 0, 11, 1);
+        updateWorkingTime(lastWeekDayTime, 0, 11, 1, true);
 
         onData(is(instanceOf(WorkingTime.class)))
                 .inAdapterView(withId(R.id.list_working_times))
@@ -87,16 +96,20 @@ public class DashboardFragmentTest {
     @Test
     public void shouldUpdateDashboardWhenWorkingTimesUpdated() {
         Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated");
+        onView(withId(R.id.list_working_times)).check(matches(isDisplayed())).check(matches(withListSizeLeast(5)));
+        Log.d(TAG, "shouldDisplayWorkedTimeInList waiting finish");
 
         Calendar calendar = Calendar.getInstance();
         Calendar fr = DateTimeUtils.firstDateTimeOfWeek(calendar);
         Calendar to = DateTimeUtils.lastDateTimeOfWeek(calendar);
         long lastWeekDayTime = to.getTimeInMillis();
 
-        updateWorkingTime(lastWeekDayTime, 0, 9, 1, WorkingTime.WORKING_TYPE_NONE);
-        updateWorkingTime(lastWeekDayTime, -1, 12, 2, WorkingTime.WORKING_TYPE_HALF);
-        updateWorkingTime(lastWeekDayTime, -2, 15, 3);
-        updateWorkingTime(lastWeekDayTime, -3, 9, 4, WorkingTime.WORKING_TYPE_ALL);
+        realm.beginTransaction();
+        updateWorkingTime(lastWeekDayTime, 0, 9, 1, WorkingTime.WORKING_TYPE_NONE, false);
+        updateWorkingTime(lastWeekDayTime, -1, 12, 2, WorkingTime.WORKING_TYPE_HALF, false);
+        updateWorkingTime(lastWeekDayTime, -2, 15, 3, false);
+        updateWorkingTime(lastWeekDayTime, -3, 9, 4, WorkingTime.WORKING_TYPE_ALL, false);
+        realm.commitTransaction();
 
         Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated.updateWorkingTime finished");
 
@@ -111,8 +124,8 @@ public class DashboardFragmentTest {
         }
 
         onView(withId(R.id.worked_time)).check(matches(withText(String.format("%02d:00:00", expectedWorkedTime))));
-//        onView(withId(R.id.target_time)).check(matches(withText(String.format("%dH", expectedTarget))));
-//        onView(withId(R.id.remain_time)).check(matches(withText(String.format("%02d:00:00", expectedTarget - expectedWorkedTime))));
+        onView(withId(R.id.target_time)).check(matches(withText(String.format("%dH", expectedTarget))));
+        onView(withId(R.id.remain_time)).check(matches(withText(String.format("%02d:00:00", expectedTarget - expectedWorkedTime))));
     }
 
     private List<WorkingTime> findAll(Calendar fr, Calendar to) {
@@ -127,10 +140,10 @@ public class DashboardFragmentTest {
         return list;
     }
 
-    private WorkingTime updateWorkingTime(long lastWeekDayTime, int offsetDate, int start, int hours) {
-        return updateWorkingTime(lastWeekDayTime, offsetDate, start, hours, null);
+    private WorkingTime updateWorkingTime(long lastWeekDayTime, int offsetDate, int start, int hours, boolean withTransaction) {
+        return updateWorkingTime(lastWeekDayTime, offsetDate, start, hours, null, withTransaction);
     }
-    private WorkingTime updateWorkingTime(long lastWeekDayTime, int offsetDate, int start, int hours, String workingType) {
+    private WorkingTime updateWorkingTime(long lastWeekDayTime, int offsetDate, int start, int hours, String workingType, boolean withTransaction) {
         WorkingTime workingTime = new WorkingTime();
 
         Calendar calendar = Calendar.getInstance();
@@ -154,10 +167,17 @@ public class DashboardFragmentTest {
             workingTime.setWorkingType(workingType);
         }
 
-        realm.beginTransaction();
+        if (withTransaction)
+            realm.beginTransaction();
         Log.d(TAG, "insertOrUpdate " + toString(workingTime));
         realm.insertOrUpdate(workingTime);
-        realm.commitTransaction();
+        if (withTransaction)
+            realm.commitTransaction();
+        //Log.d(TAG, "thread " + Thread.currentThread().getName());
+        try {
+            Thread.sleep(5000L);
+        } catch (InterruptedException e) {
+        }
         return workingTime;
     }
 

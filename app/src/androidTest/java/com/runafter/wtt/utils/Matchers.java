@@ -1,4 +1,4 @@
-package com.runafter.wtt.fragments.utils;
+package com.runafter.wtt.utils;
 
 import android.view.View;
 import android.widget.ListView;
