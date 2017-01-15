@@ -63,4 +63,10 @@ public class DateTimeUtils {
         final int hours = hoursOf(milliseconds);
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
+
+    public static long minimumInDate(long time) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(time);
+        return minimumInDate(cal).getTimeInMillis();
+    }
 }

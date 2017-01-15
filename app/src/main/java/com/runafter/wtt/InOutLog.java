@@ -8,6 +8,8 @@ import io.realm.RealmObject;
 
 public class InOutLog extends RealmObject {
 
+    public static final String FIELD_TIME = "time";
+
     public InOutLog() {
         super();
     }
