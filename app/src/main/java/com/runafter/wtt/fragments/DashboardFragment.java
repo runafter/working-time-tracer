@@ -87,11 +87,12 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, this + ".onCreate");
+        Log.d(TAG, "onCreate");
         this.realm = Realm.getDefaultInstance();
         this.handler = new Handler();
         this.timeFormat = new SimpleDateFormat("HH:mm:ss");
         this.timeZoneOffset = timeZoneOffset();
+        Log.d(TAG, "onCreate finish");
     }
 
     @Override
@@ -106,7 +107,7 @@ public class DashboardFragment extends Fragment {
         this.tvInOfficeTime = (TextView)fragment.findViewById(R.id.in_office_time);
         this.tvOutOfficeTime = (TextView)fragment.findViewById(R.id.out_office_time);
 
-        Log.d(TAG, this + ".onCreateView");
+        Log.d(TAG, "onCreateView");
         IOverScrollDecor iOverScrollDecor = OverScrollDecoratorHelper.setUpOverScroll(lvWorkingTimes);
         iOverScrollDecor.setOverScrollStateListener(new ListenerStubs.OverScrollStateListenerStub() {
             @Override
@@ -124,6 +125,7 @@ public class DashboardFragment extends Fragment {
                 Log.d(TAG, "onOverScrollUpdate state[" + state + ":" + overScrollStateOf(state) + "] offset[" + offset + "]");
             }
         });
+        Log.d(TAG, "onCreateView finish");
         return fragment;
     }
 
@@ -203,6 +205,7 @@ public class DashboardFragment extends Fragment {
         @NonNull
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+            Log.d(TAG, "WorkingTimesAdapter.getView");
             View rowView = convertView;
             ViewHolder view;
 
@@ -218,7 +221,7 @@ public class DashboardFragment extends Fragment {
                 view.start= (TextView) rowView.findViewById(R.id.tvStart);
                 view.end = (TextView) rowView.findViewById(R.id.tvEnd);
                 view.workedTime = (TextView) rowView.findViewById(R.id.tvWorkedTime);
-                view.workingTypes = (TextView) rowView.findViewById(R.id.tvWorkingTimeTypes);
+                view.workingType = (TextView) rowView.findViewById(R.id.tvWorkingTimeTypes);
 
                 rowView.setTag(view);
             } else {
@@ -228,13 +231,24 @@ public class DashboardFragment extends Fragment {
             /** Set data to your Views. */
             WorkingTime item = getItem(position);
             //debug("start:", item.getStart());
-            view.date.setText(dateFormat.format(item.getDate()));
-            view.start.setText(timeFormat.format(item.getStart()));
-            view.end.setText(timeFormat.format(item.getEnd()));
-            view.workedTime.setText(timeFormat.format(timeZoneOffset + item.getEnd() - item.getStart()));
-            view.workingTypes.setText(item.getWorkingType());
+            String date = dateFormat.format(item.getDate());
+            view.date.setText(date);
+            String start = timeFormat.format(item.getStart());
+            view.start.setText(start);
+            String end = timeFormat.format(item.getEnd());
+            view.end.setText(end);
+            String workedTime = timeFormat.format(timeZoneOffset + item.getEnd() - item.getStart());
+            view.workedTime.setText(workedTime);
+            view.workingType.setText(item.getWorkingType());
+
+            Log.d(TAG, "WorkingTimesAdapter.getView date: " + date);
+            Log.d(TAG, "WorkingTimesAdapter.getView start: " + start);
+            Log.d(TAG, "WorkingTimesAdapter.getView end: " + end);
+            Log.d(TAG, "WorkingTimesAdapter.getView workedTime: " + workedTime);
+            Log.d(TAG, "WorkingTimesAdapter.getView workingType: " + item.getWorkingType());
 
             applyStyles(rowView, view, item);
+            Log.d(TAG, "WorkingTimesAdapter.getView finish");
             return rowView;
         }
 
@@ -251,7 +265,7 @@ public class DashboardFragment extends Fragment {
                 view.start.setTextColor(Color.GRAY);
                 view.end.setTextColor(Color.GRAY);
                 view.workedTime.setTextColor(Color.GRAY);
-                view.workingTypes.setTextColor(Color.GRAY);
+                view.workingType.setTextColor(Color.GRAY);
             }
         }
 
@@ -276,7 +290,7 @@ public class DashboardFragment extends Fragment {
             protected TextView start;
             protected TextView end;
             protected TextView workedTime;
-            protected TextView workingTypes;
+            protected TextView workingType;
         }
     }
 
@@ -303,33 +317,35 @@ public class DashboardFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnDashboardFragmentInteractionListener");
         }
-        Log.d(TAG, this + ".onAttach");
+        Log.d(TAG, "onAttach");
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
-        Log.d(TAG, this + ".onDetach");
+        Log.d(TAG, "onDetach");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, this + ".onDestroy");
+        Log.d(TAG, "onDestroy");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, this + ".onResume");
+        Log.d(TAG, "onResume");
         this.handler.post(taskSetWorkingTimeAdapter());
         startTimer();
         setUpDashboardUpdater();
         //setUpWorkingTImeListUpdater();
+        Log.d(TAG, "onResume finish");
     }
 
     private void setUpDashboardUpdater() {
+        Log.d(TAG, "setUpDashboardUpdater");
         Calendar calendar = Calendar.getInstance();
         Calendar to = lastDateTimeOfWeek(calendar);
         Calendar fr = firstDateTimeOfWeek(calendar);
@@ -342,6 +358,7 @@ public class DashboardFragment extends Fragment {
                 .addChangeListener(new RealmChangeListener<RealmResults<WorkingTime>>() {
                     @Override
                     public void onChange(RealmResults<WorkingTime> result) {
+                        Log.d(TAG, "setUpDashboardUpdater.resultsThisWeekWorkingTime.onChange");
                         int s = seq.getAndIncrement();
                         Iterator<WorkingTime> iterator = result.iterator();
                         Dashboard dashboard = new Dashboard();
@@ -362,20 +379,30 @@ public class DashboardFragment extends Fragment {
 
                         dashboard.remain = hoursToMilliseconds(dashboard.target) - dashboard.workedTime;
                         updateDashboard(dashboard);
+                        Log.d(TAG, "setUpDashboardUpdater.resultsThisWeekWorkingTime.onChange finish");
                     }
                 });
-
+        Log.d(TAG, "setUpDashboardUpdater finish");
     }
 
     private void updateDashboard(final Dashboard dashboard) {
         handler.post(new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG, "updateDashboard.handler.post.run");
                 tvRemainTime.setText(formatElapseTime(dashboard.remain));
                 tvTargetTime.setText(formatHour(dashboard.target));
                 tvWorkedTime.setText(formatElapseTime(dashboard.workedTime));
                 tvInOfficeTime.setText(formatElapseTime(dashboard.inOfficeTime));
                 tvOutOfficeTime.setText(formatElapseTime(dashboard.outOfficeTime));
+
+                Log.d(TAG, "updateDashboard.handler.post.run remain: " + dashboard.remain);
+                Log.d(TAG, "updateDashboard.handler.post.run target: " + dashboard.target);
+                Log.d(TAG, "updateDashboard.handler.post.run workedTime: " + dashboard.workedTime);
+                Log.d(TAG, "updateDashboard.handler.post.run inOfficeTime: " + dashboard.inOfficeTime);
+                Log.d(TAG, "updateDashboard.handler.post.run outOfficeTime: " + dashboard.outOfficeTime);
+
+                Log.d(TAG, "updateDashboard.handler.post.run finish");
             }
         });
 
@@ -417,9 +444,11 @@ public class DashboardFragment extends Fragment {
         return new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG, "taskSetWorkingTimeAdapter.Runnable.run");
                 workingTimesAdapter = workingTImesApdapter();
                 lvWorkingTimes.setAdapter(workingTimesAdapter);
                 addWorkingTimes(0);
+                Log.d(TAG, "taskSetWorkingTimeAdapter.Runnable.run finish");
             }
         };
     }
@@ -441,6 +470,7 @@ public class DashboardFragment extends Fragment {
 
         @Override
         protected Dashboard doInBackground(Object... objects) {
+            Log.d(TAG, "UpdateWorkTimeAsyncTask.doInBackground");
             Boolean inOffice = (Boolean)objects[0];
             Dashboard dashboard = (Dashboard)objects[1];
             WorkingTime workingTime = dashboard.today;
@@ -452,6 +482,7 @@ public class DashboardFragment extends Fragment {
             } else {
 
             }
+            Log.d(TAG, "UpdateWorkTimeAsyncTask.doInBackground finish");
             return dashboard;
         }
 
@@ -477,12 +508,15 @@ public class DashboardFragment extends Fragment {
         @Override
         protected void onPostExecute(List<WorkingTime> workingTimes) {
             super.onPostExecute(workingTimes);
+            Log.d(TAG, "WorkingTimesFetchAsyncTask.onPostExecute");
             workingTimesAdapter.addAll(workingTimes);
             setUpWorkingTimeAdapterUpdater(workingTimes);
+            Log.d(TAG, "WorkingTimesFetchAsyncTask.onPostExecute finish");
         }
 
         @Override
         protected List<WorkingTime> doInBackground(Integer... params) {
+            Log.d(TAG, "WorkingTimesFetchAsyncTask.doInBackground");
             this.realm = Realm.getDefaultInstance();
             Calendar calendar = Calendar.getInstance();
 
@@ -507,14 +541,15 @@ public class DashboardFragment extends Fragment {
             }
             realm.commitTransaction();
 
-
+            Log.d(TAG, "WorkingTimesFetchAsyncTask.doInBackground finish");
             return workingTimes;
         }
 
         private void setUpWorkingTimeAdapterUpdater(List<WorkingTime> workingTimes) {
+            Log.d(TAG, "WorkingTimesFetchAsyncTask.setUpWorkingTimeAdapterUpdater");
             int count = workingTimes.size();
             if (count == 0) {
-                Log.d(TAG, "count " + count);
+                Log.d(TAG, "WorkingTimesFetchAsyncTask.setUpWorkingTimeAdapterUpdater canceled");
                 return;
             }
             WorkingTime first = workingTimes.get(count - 1);
@@ -528,6 +563,7 @@ public class DashboardFragment extends Fragment {
                     .addChangeListener(new RealmChangeListener<RealmResults<WorkingTime>>() {
                           @Override
                           public void onChange(RealmResults<WorkingTime> element) {
+                              Log.d(TAG, "WorkingTimesFetchAsyncTask.setUpWorkingTimeAdapterUpdater.realm.onChange");
                               Iterator<WorkingTime> iterator = element.iterator();
                               boolean changed = false, c;
                               while (iterator.hasNext()) {
@@ -537,10 +573,12 @@ public class DashboardFragment extends Fragment {
                               }
                               if (changed)
                                   workingTimesAdapter.notifyDataSetChanged();
+                              Log.d(TAG, "WorkingTimesFetchAsyncTask.setUpWorkingTimeAdapterUpdater.realm.onChange finish");
                           }
                      }
             );
             realm.close();
+            Log.d(TAG, "WorkingTimesFetchAsyncTask.setUpWorkingTimeAdapterUpdater finish");
         }
 
         private WorkingTime workingTimeOf(Calendar calendar) {
@@ -629,7 +667,7 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        Log.d(TAG, this + ".onStop");
+        Log.d(TAG, "onStop");
     }
 
 
