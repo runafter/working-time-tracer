@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -260,10 +261,8 @@ public class MainActivity extends AppCompatActivity
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
             }
         });
-
 
         builder.show();
     }
@@ -271,6 +270,7 @@ public class MainActivity extends AppCompatActivity
 
     private void startMonitoringService() {
         AsyncTask task = new AsyncTask() {
+            @Nullable
             @Override
             protected Object doInBackground(Object[] params) {
                 startService(new Intent(MainActivity.this, MdmNotificationListenerService.class));
@@ -298,6 +298,7 @@ public class MainActivity extends AppCompatActivity
 
     private void clearAllLogs() {
         AsyncTask task = new AsyncTask() {
+            @Nullable
             @Override
             protected Object doInBackground(Object[] params) {
                 Realm realm = Realm.getDefaultInstance();
