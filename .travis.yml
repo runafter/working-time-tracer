@@ -12,6 +12,10 @@ android:
     - extra-android-m2repository
     - extra-android-support
 
+addons:
+  apt_packages:
+    - pandoc
+
 before_install:
   - chmod +x gradlew
 
@@ -32,6 +36,6 @@ after_failure:
   - cat logcat.log
   - wget http://imgur.com/tools/imgurbash.sh
   - chmod a+x imgurbash.sh
-  - adb shell screencap -p | sed 's/\r$//' &gt; screen.png
+  - adb shell screencap -p | sed 's/\r$//' > screen.png
   - ./imgurbash.sh screen.png
   - pandoc builder/build/reports/tests/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
