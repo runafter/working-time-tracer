@@ -30,4 +30,8 @@ script: ./gradlew test connectedAndroidTest
 after_failure:
   - cat avd.log
   - cat logcat.log
-
+  - wget http://imgur.com/tools/imgurbash.sh
+  - chmod a+x imgurbash.sh
+  - adb shell screencap -p | sed 's/\r$//' &gt; screen.png
+  - ./imgurbash.sh screen.png
+  - pandoc builder/build/reports/tests/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
