@@ -19,13 +19,13 @@ before_script:
   - echo no | android create avd --force -n test -t android-24 --abi armeabi-v7a
   - emulator -avd test -no-audio -no-window -verbose > avd.log &
   - android-wait-for-emulator
-  - sleep 60
+  - sleep 120
   - adb shell input keyevent 82
   - adb logcat -d
   #- adb logcat ActivityTestRule:I TestRunner:I LifecycleMonitor:D ActivityManager:D WTT:D WTTT:D WTTS:D *:S > logcat.log &
   - adb logcat > logcat.log &
 
-script: ./gradlew test connectedAndroidTest --info
+script: ./gradlew test connectedAndroidTest
 
 after_failure:
   - cat avd.log
