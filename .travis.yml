@@ -6,9 +6,9 @@ android:
     - platform-tools
     - tools
     - build-tools-25.0.2
-    - android-22
+    - android-24
     - android-25
-    - sys-img-armeabi-v7a-android-22
+    - sys-img-armeabi-v7a-android-24
     - extra-android-m2repository
     - extra-android-support
 
@@ -23,20 +23,24 @@ before_script:
   - echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
   - emulator -avd test -no-audio -no-window -verbose > avd.log &
   - android-wait-for-emulator
-  - sleep 120
-  - adb shell input keyevent 82
-  - adb logcat -d
-  #- adb logcat ActivityTestRule:I TestRunner:I LifecycleMonitor:D ActivityManager:D WTT:D WTTT:D WTTS:D *:S > logcat.log &
-  - adb logcat > logcat.log &
-
-script: ./gradlew test connectedAndroidTest
-
-after_failure:
-  - cat avd.log
-  - cat logcat.log
-  - wget https://github.com/tremby/imgur.sh/raw/master/imgur.sh
-  - chmod a+x imgur.sh
+  #- sleep 120
   - adb shell screencap -p | sed 's/\r$//' > screen.png
   - ./imgur.sh screen.png
-  - pandoc app/build/reports/tests/debug/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
-  - pandoc app/build/reports/androidTests/connected/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
+  - adb shell input keyevent 82
+  - adb shell screencap -p | sed 's/\r$//' > screen.png
+  - ./imgur.sh screen.png
+  #- adb logcat -d
+  #- adb logcat ActivityTestRule:I TestRunner:I LifecycleMonitor:D ActivityManager:D WTT:D WTTT:D WTTS:D *:S > logcat.log &
+  #- adb logcat > logcat.log &
+
+script: pwd #./gradlew test connectedAndroidTest
+
+after_failure:
+  #- cat avd.log
+  #- cat logcat.log
+  #- wget https://github.com/tremby/imgur.sh/raw/master/imgur.sh
+  #- chmod a+x imgur.sh
+  #- adb shell screencap -p | sed 's/\r$//' > screen.png
+  #- ./imgur.sh screen.png
+  #- pandoc app/build/reports/tests/debug/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
+  #- pandoc app/build/reports/androidTests/connected/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
