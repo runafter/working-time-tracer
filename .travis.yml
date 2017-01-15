@@ -34,8 +34,9 @@ script: ./gradlew test connectedAndroidTest
 after_failure:
   - cat avd.log
   - cat logcat.log
-  - wget http://imgur.com/tools/imgurbash.sh
-  - chmod a+x imgurbash.sh
+  - wget https://github.com/tremby/imgur.sh/raw/master/imgur.sh
+  - chmod a+x imgur.sh
   - adb shell screencap -p | sed 's/\r$//' > screen.png
-  - ./imgurbash.sh screen.png
-  - pandoc builder/build/reports/tests/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
+  - ./imgur.sh screen.png
+  - pandoc app/build/reports/tests/debug/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
+  - pandoc app/build/reports/androidTests/connected/index.html -t plain | sed -n '/^Failed tests/,/default-package/p'
