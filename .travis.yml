@@ -21,6 +21,7 @@ before_script:
   - android-wait-for-emulator
   - sleep 60
   - adb shell input keyevent 82
+  - adb logcat -d
   #- adb logcat ActivityTestRule:I TestRunner:I LifecycleMonitor:D ActivityManager:D WTT:D WTTT:D WTTS:D *:S > logcat.log &
   - adb logcat > logcat.log &
 
