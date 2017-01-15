@@ -24,6 +24,9 @@ before_script:
   - emulator -avd test -no-audio -no-window -verbose > avd.log &
   - android-wait-for-emulator
   #- sleep 120
+  - cat avd.log
+  - wget https://github.com/tremby/imgur.sh/raw/master/imgur.sh
+  - chmod a+x imgur.sh
   - adb shell screencap -p | sed 's/\r$//' > screen.png
   - ./imgur.sh screen.png
   - adb shell input keyevent 82
