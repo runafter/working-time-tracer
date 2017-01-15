@@ -4,7 +4,6 @@ import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import static com.runafter.wtt.DateTimeUtils.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -20,29 +19,29 @@ public class DateTimeUtilsTest {
         calendar.setFirstDayOfWeek(Calendar.SUNDAY);
 
         calendar = calendarOf(calendar, 2017, 1, 3);
-        Calendar expected = maxInDate(calendarOf(calendar, 2017, 1, 7));
+        Calendar expected = minInDate(calendarOf(calendar, 2017, 1, 7));
         assertThat(lastDateTimeOfWeek(calendar), is(expected));
 
         calendar = calendarOf(calendar, 2017, 1, 1);
-        expected = maxInDate(calendarOf(calendar, 2017, 1, 7));
+        expected = minInDate(calendarOf(calendar, 2017, 1, 7));
         assertThat(lastDateTimeOfWeek(calendar), is(expected));
 
         calendar = calendarOf(calendar, 2017, 1, 7);
-        expected = maxInDate(calendarOf(calendar, 2017, 1, 7));
+        expected = minInDate(calendarOf(calendar, 2017, 1, 7));
         assertThat(lastDateTimeOfWeek(calendar), is(expected));
 
         calendar = calendarOf(calendar, 2017, 2, 2);
-        expected = maxInDate(calendarOf(calendar, 2017, 2, 4));
+        expected = minInDate(calendarOf(calendar, 2017, 2, 4));
         assertThat(lastDateTimeOfWeek(calendar), is(expected));
     }
 
-    private Calendar maxInDate(Calendar calendar) {
+    private Calendar minInDate(Calendar calendar) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(calendar.getTimeInMillis());
-        cal.set(Calendar.HOUR_OF_DAY, 23);
-        cal.set(Calendar.MINUTE, 59);
-        cal.set(Calendar.SECOND, 59);
-        cal.set(Calendar.MILLISECOND, 999);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         return cal;
     }
 
