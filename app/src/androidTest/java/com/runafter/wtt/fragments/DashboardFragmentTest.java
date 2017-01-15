@@ -51,17 +51,17 @@ public class DashboardFragmentTest {
         Log.d(TAG, "DashboardFragmentTest.setUp()");
         Realm.init(mActivityRule.getActivity());
         this.realm = Realm.getDefaultInstance();
+        Log.d(TAG, "DashboardFragmentTest.setUp() deleteAll");
+        realm.beginTransaction();
+        realm.deleteAll();
+        realm.commitTransaction();
+        Log.d(TAG, "DashboardFragmentTest.setUp() deleteAll finish");
         Log.d(TAG, "DashboardFragmentTest.setUp() finish");
-    }
+}
     @After
     public void tearDown() {
         Log.d(TAG, "DashboardFragmentTest.tearDown()");
         if (this.realm != null) {
-            Log.d(TAG, "DashboardFragmentTest.tearDown() deleteAll");
-            realm.beginTransaction();
-            realm.deleteAll();
-            realm.commitTransaction();
-            Log.d(TAG, "DashboardFragmentTest.tearDown() deleteAll finish");
             this.realm.close();
         }
         Log.d(TAG, "DashboardFragmentTest.tearDown() finish");
@@ -111,7 +111,7 @@ public class DashboardFragmentTest {
         updateWorkingTime(lastWeekDayTime, -3, 9, 4, WorkingTime.WORKING_TYPE_ALL, false);
         realm.commitTransaction();
 
-        Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated.updateWorkingTime finished");
+
 
         List<WorkingTime> wts = findAll(fr, to);
 
@@ -123,9 +123,22 @@ public class DashboardFragmentTest {
                 expectedWorkedTime += DateTimeUtils.hoursOf(wt.getEnd() - wt.getStart());
         }
 
-        onView(withId(R.id.worked_time)).check(matches(withText(String.format("%02d:00:00", expectedWorkedTime))));
-        onView(withId(R.id.target_time)).check(matches(withText(String.format("%dH", expectedTarget))));
-        onView(withId(R.id.remain_time)).check(matches(withText(String.format("%02d:00:00", expectedTarget - expectedWorkedTime))));
+        String expectedWorkedTimeString = String.format("%02d:00:00", expectedWorkedTime);
+        String expectedTargetString = String.format("%dH", expectedTarget);
+        String expctedRemainString = String.format("%02d:00:00", expectedTarget - expectedWorkedTime);
+
+        Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated.updateWorkingTime expectedWorkedTime: " + expectedWorkedTimeString);
+        Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated.updateWorkingTime expectedTarget    : " + expectedTargetString);
+        Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated.updateWorkingTime expctedRemain     : " + expctedRemainString);
+
+        onData(is(instanceOf(WorkingTime.class)))
+                .inAdapterView(withId(R.id.list_working_times));
+
+        onView(withId(R.id.worked_time)).check(matches(withText(expectedWorkedTimeString)));
+        onView(withId(R.id.target_time)).check(matches(withText(expectedTargetString)));
+        onView(withId(R.id.remain_time)).check(matches(withText(expctedRemainString)));
+
+        Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated.updateWorkingTime finished");
     }
 
     private List<WorkingTime> findAll(Calendar fr, Calendar to) {
@@ -174,10 +187,10 @@ public class DashboardFragmentTest {
         if (withTransaction)
             realm.commitTransaction();
         //Log.d(TAG, "thread " + Thread.currentThread().getName());
-        try {
-            Thread.sleep(5000L);
-        } catch (InterruptedException e) {
-        }
+//        try {
+//            Thread.sleep(5000L);
+//        } catch (InterruptedException e) {
+//        }
         return workingTime;
     }
 
