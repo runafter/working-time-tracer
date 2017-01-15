@@ -14,7 +14,7 @@ android:
 
 before_install:
   - chmod +x gradlew
-  - adb logcat > logcat.log &
+  - adb logcat WTT:D WTTT:D WTTS:D *:S> logcat.log &
 
 before_script:
   - echo no | android create avd --force -n test -t android-24 --abi armeabi-v7a

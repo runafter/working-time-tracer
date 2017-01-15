@@ -41,6 +41,7 @@ import static org.hamcrest.CoreMatchers.is;
  */
 @RunWith(AndroidJUnit4.class)
 public class DashboardFragmentTest {
+    private static final String TAG = "WTTT";
     @Rule
     public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule(MainActivity.class);
     private Realm realm;
@@ -148,7 +149,7 @@ public class DashboardFragmentTest {
         }
 
         realm.beginTransaction();
-        Log.d("TEST", "insertOrUpdate " + toString(workingTime));
+        Log.d(TAG, "insertOrUpdate " + toString(workingTime));
         realm.insertOrUpdate(workingTime);
         realm.commitTransaction();
         return workingTime;

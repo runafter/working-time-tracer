@@ -24,7 +24,7 @@ import io.realm.Realm;
  */
 
 public class MdmNotificationListenerService extends NotificationListenerService {
-    private static final String TAG = "MNLService";
+    private static final String TAG = "WTTS";
     private Map<Long, Realm> realms = new ConcurrentHashMap<>();
     private SharedPreferences prefs;
     private Pattern packageNamePattern;

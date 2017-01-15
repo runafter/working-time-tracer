@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
                     DashboardFragment.OnDashboardFragmentInteractionListener,
                     InOutLogsFragment.OnInOutFragmentInteractionListener {
-    private static final String TAG = "Main";
+    private static final String TAG = "WTT";
 
 
     private Realm realm;

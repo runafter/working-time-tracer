@@ -51,9 +51,8 @@ import static com.runafter.wtt.DateTimeUtils.*;
  * create an instance of this fragment.
  */
 public class DashboardFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String TAG = "Dashboard";
+
+    private static final String TAG = "WTT";
 
     private OnDashboardFragmentInteractionListener mListener;
     private ListView lvWorkingTimes;
