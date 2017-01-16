@@ -51,5 +51,6 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.robolectric:robolectric:3.2'
+    compile group: 'org.mockito', name: 'mockito-core', version: '2.6.3'
 
 }

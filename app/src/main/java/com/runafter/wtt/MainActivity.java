@@ -30,18 +30,14 @@ import android.widget.EditText;
 import com.runafter.wtt.fragments.DashboardFragment;
 import com.runafter.wtt.fragments.InOutLogsFragment;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 import io.realm.Sort;
-
-import static com.runafter.wtt.DateTimeUtils.minimumInDate;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -178,7 +174,8 @@ public class MainActivity extends AppCompatActivity
                 .addChangeListener(new RealmChangeListener<RealmResults<InOutLog>>() {
             @Override
             public void onChange(RealmResults<InOutLog> results) {
-                new WorkingTimesDataUpdateAsyncTask().execute(from, results);
+
+                new WorkingTimesDataUpdateAsyncTask().execute(from, InOutLog.copyOf(results));
             }
         });
     }
@@ -189,76 +186,16 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Collection<WorkingTime> doInBackground(Object... params) {
             this.realm = Realm.getDefaultInstance();
-            Long from = (Long)params[0];
-            RealmResults<InOutLog> results = (RealmResults<InOutLog>)params[1];
-
-            LinkedList<InOutLog> inOutLogs = asList(results);   // desc
-            if (!inOutLogs.isEmpty())
-                inOutLogs.addAll(findInOutLogsDesc(dateOf(timeOfLast(inOutLogs)), from));
-
-            Map<Long, WorkingTime> workingTimes = findWorkingTimes(dateOf(timeOfLast(inOutLogs)), dateOf(timeOfFirst(inOutLogs)));
-
-            Iterator<InOutLog> iterator = inOutLogs.descendingIterator();
-            InOutLog inLog, outLog;
-            while (iterator.hasNext()) {
-                //TODO 
-//                inLog = nextInLog();
-//                outLog = nextOutLog();
-
-                InOutLog log = iterator.next();
-                long key = dateOf(log.getTime());
-
-                workingTimes.put(key, apply(workingTimes.get(key), log));
-            }
-            return workingTimes.values();
-        }
-
-        private WorkingTime apply(@Nullable WorkingTime workingTime, InOutLog log) {
-            //TODO
-            if (workingTime == null) {
-                workingTime = new WorkingTime();
-                workingTime.setDate(dateOf(log.getTime()));
-            }
-
-            return null;
-        }
-
-        private long dateOf(long time) {
-            return minimumInDate(time);
-        }
-
-        private Map<Long, WorkingTime> findWorkingTimes(long fr, long to) {
-            Map<Long, WorkingTime> map = new LinkedHashMap<>();
-            RealmResults<WorkingTime> results = realm.where(WorkingTime.class)
-                    .greaterThanOrEqualTo(WorkingTime.FIELD_DATE, fr)
-                    .lessThanOrEqualTo(WorkingTime.FIELD_DATE, to)
-                    .findAll();
-            for (WorkingTime result : results)
-                map.put(result.getDate(), result);
-            return map;
-        }
-
-        private Long timeOfFirst(LinkedList<InOutLog> lnOutLogs) {
-            return lnOutLogs.peekFirst().getTime();
-        }
-
-        private Long timeOfLast(LinkedList<InOutLog> lnOutLogs) {
-            return lnOutLogs.peekLast().getTime();
-        }
-
-        private LinkedList<InOutLog> asList(RealmResults<InOutLog> results) {
-            LinkedList<InOutLog> list = new LinkedList<>();
-            Iterator<InOutLog> iterator = results.iterator();
-            while (iterator.hasNext())
-                list.add(iterator.next());
-            return list;
-        }
-
-        private Collection<? extends InOutLog> findInOutLogsDesc(long time, long to) {
-            return asList(realm.where(InOutLog.class)
-                            .greaterThanOrEqualTo(InOutLog.FIELD_TIME, time)
-                            .lessThan(InOutLog.FIELD_TIME, to)
-                            .findAllSorted(InOutLog.FIELD_TIME, Sort.DESCENDING));
+            WorkingTimeRepository workingTimeRepo = new WorkingTimeRepository(realm);
+            InOutLogAnalyzer analyzer = new InOutLogAnalyzer(
+                    new InOutLogRepository(realm),
+                    workingTimeRepo
+            );
+            long from = (Long)params[0];
+            List<InOutLog> results = (List<InOutLog>)params[1];
+            Collection<WorkingTime> updatedWorkingTimes = analyzer.analyze(from, results);
+            workingTimeRepo.updateAll(updatedWorkingTimes);
+            return updatedWorkingTimes;
         }
     }
 
@@ -281,8 +218,6 @@ public class MainActivity extends AppCompatActivity
     public void onInOutFragmentInteraction(Uri uri) {
 
     }
-
-
 
 
     @Override

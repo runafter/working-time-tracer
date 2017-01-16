@@ -124,9 +124,9 @@ public class WorkingTime extends RealmObject {
     public String toString() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         return "WorkingTime{" +
-                "date=" + sdf.format(new Date(getDate())) +
-                ", start=" + getStart() +
-                ", end=" + getEnd() +
+                "date=" + getDate() + ":" + sdf.format(new Date(getDate())) +
+                ", start=" + getStart() + ":" + sdf.format(new Date(getStart())) +
+                ", end=" + getEnd() + ":" + sdf.format(new Date(getEnd())) +
                 ", inOffice=" + getInOffice() +
                 ", outOffice=" + getOutOffice() +
                 ", workingType='" + getWorkingType() + '\'' +

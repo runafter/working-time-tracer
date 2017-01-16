@@ -152,9 +152,6 @@ public class InOutLogsFragment extends Fragment {
         };
     }
     private ListAdapter logsListAdapter() {
-        realm.beginTransaction();
-        realm.insert(InOutLog.of(new Date().getTime(), this.hashCode() + ".INOUT", "DESC"));
-        realm.commitTransaction();
         RealmQuery<InOutLog> q = realm.where(InOutLog.class);
         RealmBaseAdapter<InOutLog> adapter = new WorkingTimeLogAdapter(this.getActivity(), q.findAllSorted("time", Sort.DESCENDING)) ;
         return adapter;
