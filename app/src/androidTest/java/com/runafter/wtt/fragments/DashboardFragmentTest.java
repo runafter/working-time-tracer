@@ -50,7 +50,7 @@ public class DashboardFragmentTest {
     public void setUp() {
         Log.d(TAG, "DashboardFragmentTest.setUp()");
         Realm.init(mActivityRule.getActivity());
-        this.realm = Realm.getDefaultInstance();
+        this.realm = Realm.getInstance(MainActivity.realmConfiguration());
         Log.d(TAG, "DashboardFragmentTest.setUp() deleteAll");
         realm.beginTransaction();
         realm.deleteAll();
