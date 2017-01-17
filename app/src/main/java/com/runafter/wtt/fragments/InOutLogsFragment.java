@@ -16,6 +16,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.runafter.wtt.MainActivity;
 import com.runafter.wtt.R;
 import com.runafter.wtt.InOutLog;
 
@@ -103,7 +104,9 @@ public class InOutLogsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, this + ".onResume");
-        this.realm = Realm.getDefaultInstance();
+        if (this.realm != null)
+            this.realm.close();
+        this.realm = Realm.getInstance(MainActivity.realmConfiguration());
         if (this.handler != null)
             this.handler.post(taskInitLogListView());
     }
@@ -111,8 +114,10 @@ public class InOutLogsFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (realm != null)
+        if (realm != null) {
             realm.close();
+            realm = null;
+        }
     }
 
     @Override

@@ -30,12 +30,12 @@ import android.widget.EditText;
 import com.runafter.wtt.fragments.DashboardFragment;
 import com.runafter.wtt.fragments.InOutLogsFragment;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
+import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity
     private MenuItem menuMonitoringRunning;
     private SharedPreferences prefs;
     private Fragment fragment;
+    private RealmChangeListener inOutLogChangeListener;
+    private RealmResults<InOutLog> inOutLogRealmResults;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +85,13 @@ public class MainActivity extends AppCompatActivity
         initDB();
 
         startMonitoringService();
+    }
+
+    public static RealmConfiguration realmConfiguration() {
+        return new RealmConfiguration.Builder()
+                .deleteRealmIfMigrationNeeded()
+                .schemaVersion(0)
+                .build();
     }
 
     private void initFragment() {
@@ -161,7 +170,9 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "MainActivity.onResume");
-        realm = Realm.getDefaultInstance();
+        if (realm != null)
+            realm.close();
+        realm = Realm.getInstance(realmConfiguration());
         setUpWorkingTimesDataUpdater(lastWorkingTimesUpdatedTime());
     }
 
@@ -169,7 +180,13 @@ public class MainActivity extends AppCompatActivity
     protected void onPause() {
         super.onPause();
         Log.d(TAG, "MainActivity.onPause");
-        realm.close();
+        if (realm != null) {
+            realm.removeChangeListener(inOutLogChangeListener);
+            inOutLogChangeListener = null;
+            inOutLogRealmResults = null;
+            realm.close();
+            realm = null;
+        }
     }
 
     private long lastWorkingTimesUpdatedTime() {
@@ -177,19 +194,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setUpWorkingTimesDataUpdater(final long from) {
-        RealmChangeListener<RealmResults<InOutLog>> listener = new RealmChangeListener<RealmResults<InOutLog>>() {
+        this.inOutLogChangeListener = new RealmChangeListener<RealmResults<InOutLog>>() {
             @Override
             public void onChange(RealmResults<InOutLog> results) {
                 Log.d(TAG, "setUpWorkingTimesDataUpdater.onChange " + results.size());
                 new WorkingTimesDataUpdateAsyncTask().execute(from, InOutLog.copyOf(results));
-                //realm.removeChangeListener();
-                //setUpWorkingTimesDataUpdater(from);
             }
         };
-        realm.where(InOutLog.class)
+        inOutLogRealmResults = realm.where(InOutLog.class)
                 .greaterThanOrEqualTo(InOutLog.FIELD_TIME, from)
-                .findAllSortedAsync(InOutLog.FIELD_TIME, Sort.DESCENDING)
-                .addChangeListener(listener);
+                .findAllSortedAsync(InOutLog.FIELD_TIME, Sort.DESCENDING);
+        inOutLogRealmResults.addChangeListener(inOutLogChangeListener);
     }
 
     public static class WorkingTimesDataUpdateAsyncTask extends AsyncTask<Object, Void, Collection<WorkingTime>> {
@@ -197,21 +212,26 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected Collection<WorkingTime> doInBackground(Object... params) {
-            this.realm = Realm.getDefaultInstance();
-            WorkingTimeRepository workingTimeRepo = new WorkingTimeRepository(realm);
-            InOutLogAnalyzer analyzer = new InOutLogAnalyzer(
-                    new InOutLogRepository(realm),
-                    workingTimeRepo
-            );
-            long from = (Long)params[0];
-            List<InOutLog> results = (List<InOutLog>)params[1];
-            //realm.beginTransaction();
-            Collection<WorkingTime> updatedWorkingTimes = analyzer.analyze(from, results);
-            //realm.commitTransaction();
-            Log.d(TAG, "updatedWorkingTimes " + updatedWorkingTimes);
-            workingTimeRepo.updateAll(updatedWorkingTimes);
-            this.realm.close();
-            return updatedWorkingTimes;
+            this.realm = Realm.getInstance(realmConfiguration());
+            try {
+                WorkingTimeRepository workingTimeRepo = new WorkingTimeRepository(realm);
+                InOutLogAnalyzer analyzer = new InOutLogAnalyzer(
+                        new InOutLogRepository(realm),
+                        workingTimeRepo
+                );
+                long from = (Long) params[0];
+                List<InOutLog> results = (List<InOutLog>) params[1];
+                //realm.beginTransaction();
+                Collection<WorkingTime> updatedWorkingTimes = analyzer.analyze(from, results);
+                //realm.commitTransaction();
+                Log.d(TAG, "updatedWorkingTimes " + updatedWorkingTimes);
+                workingTimeRepo.updateAll(updatedWorkingTimes);
+                return updatedWorkingTimes;
+            } finally {
+                this.realm.close();
+                this.realm = null;
+            }
+
         }
     }
 
@@ -287,10 +307,27 @@ public class MainActivity extends AppCompatActivity
         addInOutLog(DateTimeUtils.nowTime(), InOutLog.TYPE_IN);
     }
 
-    private void addInOutLog(long time, String type) {
-        realm.beginTransaction();
-        realm.insert(InOutLog.of(time, type, "수동 입력"));
-        realm.commitTransaction();
+    private void addInOutLog(final long time, final String type) {
+        realm.executeTransactionAsync(new Realm.Transaction() {
+            @Override
+            public void execute(Realm bgRealm) {
+                InOutLog log = bgRealm.createObject(InOutLog.class);
+                log.setTime(time);
+                log.setType(type);
+                log.setDesc("manual");
+            }
+        }, new Realm.Transaction.OnSuccess() {
+            @Override
+            public void onSuccess() {
+                // Transaction was a success.
+                Log.d(TAG, "addInOutLog.executeTransactionAsync.onSuccess");
+            }
+        }, new Realm.Transaction.OnError() {
+            @Override
+            public void onError(Throwable error) {
+                Log.d(TAG, "addInOutLog.executeTransactionAsync.onError " + error);
+            }
+        });
     }
 
     private void viewInOutLogsFragrment() {
@@ -380,11 +417,14 @@ public class MainActivity extends AppCompatActivity
             @Nullable
             @Override
             protected Object doInBackground(Object[] params) {
-                Realm realm = Realm.getDefaultInstance();
-                realm.beginTransaction();
-                realm.delete(InOutLog.class);
-                realm.commitTransaction();
-                realm.close();
+                Realm realm = Realm.getInstance(realmConfiguration());
+                try {
+                    realm.beginTransaction();
+                    realm.delete(InOutLog.class);
+                    realm.commitTransaction();
+                } finally {
+                    realm.close();
+                }
                 return null;
             }
         };

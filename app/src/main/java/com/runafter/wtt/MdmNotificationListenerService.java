@@ -115,7 +115,7 @@ public class MdmNotificationListenerService extends NotificationListenerService 
         long key = Thread.currentThread().getId();
         Realm realm = realms.get(key);
         if (realm == null) {
-            realm = Realm.getDefaultInstance();
+            realm = Realm.getInstance(MainActivity.realmConfiguration());;
             realms.put(key, realm);
         }
         return realm;
