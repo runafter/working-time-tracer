@@ -15,8 +15,8 @@ import io.realm.RealmResults;
 public class InOutLog extends RealmObject {
 
     public static final String FIELD_TIME = "time";
-    private static final String TYPE_IN = "IN";
-    private static final String TYPE_OUT = "OUT";
+    public static final String TYPE_IN = "IN";
+    public static final String TYPE_OUT = "OUT";
 
     private Long time;
     private String type;

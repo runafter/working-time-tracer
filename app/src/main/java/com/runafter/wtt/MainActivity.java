@@ -160,7 +160,16 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "MainActivity.onResume");
+        realm = Realm.getDefaultInstance();
         setUpWorkingTimesDataUpdater(lastWorkingTimesUpdatedTime());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "MainActivity.onPause");
+        realm.close();
     }
 
     private long lastWorkingTimesUpdatedTime() {
@@ -168,16 +177,19 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setUpWorkingTimesDataUpdater(final long from) {
+        RealmChangeListener<RealmResults<InOutLog>> listener = new RealmChangeListener<RealmResults<InOutLog>>() {
+            @Override
+            public void onChange(RealmResults<InOutLog> results) {
+                Log.d(TAG, "setUpWorkingTimesDataUpdater.onChange " + results.size());
+                new WorkingTimesDataUpdateAsyncTask().execute(from, InOutLog.copyOf(results));
+                //realm.removeChangeListener();
+                //setUpWorkingTimesDataUpdater(from);
+            }
+        };
         realm.where(InOutLog.class)
                 .greaterThanOrEqualTo(InOutLog.FIELD_TIME, from)
                 .findAllSortedAsync(InOutLog.FIELD_TIME, Sort.DESCENDING)
-                .addChangeListener(new RealmChangeListener<RealmResults<InOutLog>>() {
-            @Override
-            public void onChange(RealmResults<InOutLog> results) {
-
-                new WorkingTimesDataUpdateAsyncTask().execute(from, InOutLog.copyOf(results));
-            }
-        });
+                .addChangeListener(listener);
     }
 
     public static class WorkingTimesDataUpdateAsyncTask extends AsyncTask<Object, Void, Collection<WorkingTime>> {
@@ -193,8 +205,12 @@ public class MainActivity extends AppCompatActivity
             );
             long from = (Long)params[0];
             List<InOutLog> results = (List<InOutLog>)params[1];
+            //realm.beginTransaction();
             Collection<WorkingTime> updatedWorkingTimes = analyzer.analyze(from, results);
+            //realm.commitTransaction();
+            Log.d(TAG, "updatedWorkingTimes " + updatedWorkingTimes);
             workingTimeRepo.updateAll(updatedWorkingTimes);
+            this.realm.close();
             return updatedWorkingTimes;
         }
     }
@@ -202,11 +218,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        realm.close();
     }
     private void initDB() {
         Realm.init(this.getApplicationContext());
-        realm = Realm.getDefaultInstance();
     }
 
     @Override
@@ -252,11 +266,31 @@ public class MainActivity extends AppCompatActivity
             viewDashboardFragment();
         } else if (id == R.id.menu_in_out_logs) {
             viewInOutLogsFragrment();
+        } else if (id == R.id.menu_add_in_log_now) {
+            addInLogNow();
+        } else if (id == R.id.menu_add_out_log_now) {
+            addOutLogNow();
+        } else if (id == R.id.menu_add_inout_log) {
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void addOutLogNow() {
+        addInOutLog(DateTimeUtils.nowTime(), InOutLog.TYPE_OUT);
+    }
+
+    private void addInLogNow() {
+        addInOutLog(DateTimeUtils.nowTime(), InOutLog.TYPE_IN);
+    }
+
+    private void addInOutLog(long time, String type) {
+        realm.beginTransaction();
+        realm.insert(InOutLog.of(time, type, "수동 입력"));
+        realm.commitTransaction();
     }
 
     private void viewInOutLogsFragrment() {

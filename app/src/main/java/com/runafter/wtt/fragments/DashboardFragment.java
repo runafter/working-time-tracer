@@ -17,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.runafter.wtt.DateTimeUtils;
 import com.runafter.wtt.R;
 import com.runafter.wtt.WorkingTime;
 
@@ -233,19 +234,20 @@ public class DashboardFragment extends Fragment {
             //debug("start:", item.getStart());
             String date = dateFormat.format(item.getDate());
             view.date.setText(date);
-            String start = timeFormat.format(item.getStart());
+            String start = item.getStart() > 0 ? timeFormat.format(item.getStart()) : "";
             view.start.setText(start);
-            String end = timeFormat.format(item.getEnd());
+            String end = item.getEnd() > 0 ? timeFormat.format(item.getEnd()) : "";
             view.end.setText(end);
-            String workedTime = timeFormat.format(timeZoneOffset + item.getEnd() - item.getStart());
-            view.workedTime.setText(workedTime);
+            long workedTime = item.getEnd() - item.getStart();
+            String workedTimeString = DateTimeUtils.formatElapseTime(workedTime);
+            view.workedTime.setText(workedTimeString);
             view.workingType.setText(item.getWorkingType());
 
-            Log.d(TAG, "WorkingTimesAdapter.getView date: " + date);
-            Log.d(TAG, "WorkingTimesAdapter.getView start: " + start);
-            Log.d(TAG, "WorkingTimesAdapter.getView end: " + end);
-            Log.d(TAG, "WorkingTimesAdapter.getView workedTime: " + workedTime);
-            Log.d(TAG, "WorkingTimesAdapter.getView workingType: " + item.getWorkingType());
+//            Log.d(TAG, "WorkingTimesAdapter.getView date: " + date);
+//            Log.d(TAG, "WorkingTimesAdapter.getView start: " + start);
+//            Log.d(TAG, "WorkingTimesAdapter.getView end: " + end);
+//            Log.d(TAG, "WorkingTimesAdapter.getView workedTime: " + workedTime);
+//            Log.d(TAG, "WorkingTimesAdapter.getView workingType: " + item.getWorkingType());
 
             applyStyles(rowView, view, item);
             Log.d(TAG, "WorkingTimesAdapter.getView finish");
@@ -370,8 +372,11 @@ public class DashboardFragment extends Fragment {
                         while (iterator.hasNext()) {
                             WorkingTime workingTime = iterator.next();
                             int hoursWorkingType = WorkingTime.hoursValueOf(workingTime.getWorkingType());
-                            if (hoursWorkingType > 0)
-                                dashboard.workedTime += workingTime.getEnd() - workingTime.getStart();
+                            if (hoursWorkingType > 0) {
+                                long workedTime = workingTime.getEnd() - workingTime.getStart();
+                                if (workedTime > 0)
+                                    dashboard.workedTime += workedTime;
+                            }
                             dashboard.target += hoursWorkingType;
                             dashboard.inOfficeTime += workingTime.getInOffice();
                             dashboard.outOfficeTime += workingTime.getOutOffice();
@@ -587,8 +592,8 @@ public class DashboardFragment extends Fragment {
             if (workingTIme == null) {
                 workingTIme = new WorkingTime();
                 workingTIme.setDate(time);
-                workingTIme.setStart(time);
-                workingTIme.setEnd(time);
+                workingTIme.setStart(0);
+                workingTIme.setEnd(0);
                 if (isWorkDate(calendar))
                     workingTIme.setWorkingType(WorkingTime.WORKING_TYPE_ALL);
                 else
@@ -596,23 +601,12 @@ public class DashboardFragment extends Fragment {
                 realm.insert(workingTIme);
                 //debug("db ", calendar);
             } else {
-                workingTIme = copyOf(workingTIme);
+                workingTIme = WorkingTime.copyOf(workingTIme);
                 //debug("new ", calendar);
             }
             workingTIme.setStyle(styleOf(calendar));
 
             return workingTIme;
-        }
-
-        private WorkingTime copyOf(WorkingTime src) {
-            WorkingTime dst = new WorkingTime();
-            dst.setWorkingType(src.getWorkingType());
-            dst.setStart(src.getStart());
-            dst.setEnd(src.getEnd());
-            dst.setDate(src.getDate());
-            dst.setInOffice(src.getInOffice());
-            dst.setOutOffice(dst.getOutOffice());
-            return dst;
         }
 
         private int styleOf(Calendar calendar) {

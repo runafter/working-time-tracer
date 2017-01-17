@@ -15,6 +15,18 @@
     <item android:title="출입 기록" android:id="@+id/menu_logs">
         <menu>
             <item
+                android:id="@+id/menu_add_in_log_now"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="지금 입문 기록 입력" />
+            <item
+                android:id="@+id/menu_add_out_log_now"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="지금 출문 기록 입력" />
+            <item
+                android:id="@+id/menu_add_inout_log"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="출입 기록 수동 입력" />
+            <item
                 android:id="@+id/monitoring_pattern"
                 android:icon="@drawable/ic_menu_camera"
                 android:title="알림 감지 패턴 설정" />

@@ -95,7 +95,7 @@ public class InOutLogsFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnInOutFragmentInteractionListener");
         }
-        this.realm = Realm.getDefaultInstance();
+
         this.handler = new Handler();
     }
 
@@ -103,8 +103,16 @@ public class InOutLogsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, this + ".onResume");
+        this.realm = Realm.getDefaultInstance();
         if (this.handler != null)
             this.handler.post(taskInitLogListView());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (realm != null)
+            realm.close();
     }
 
     @Override
@@ -112,8 +120,6 @@ public class InOutLogsFragment extends Fragment {
         super.onDetach();
         Log.d(TAG, this + ".onDetach");
         mListener = null;
-        if (realm != null)
-            realm.close();
     }
 
     @Override

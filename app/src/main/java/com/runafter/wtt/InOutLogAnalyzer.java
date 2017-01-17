@@ -73,7 +73,7 @@ public class InOutLogAnalyzer {
     private Map<Long, WorkingTime> asMap(List<WorkingTime> workingTimes) {
         Map<Long, WorkingTime> map = new LinkedHashMap<>();
         for (WorkingTime workingTime : workingTimes)
-            map.put(workingTime.getDate(), workingTime);
+            map.put(workingTime.getDate(), WorkingTime.copyOf(workingTime));
         return map;
     }
 

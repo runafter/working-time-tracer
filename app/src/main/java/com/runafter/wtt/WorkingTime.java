@@ -145,4 +145,15 @@ public class WorkingTime extends RealmObject {
             return 4;
         return 0;
     }
+
+    public static WorkingTime copyOf(WorkingTime src) {
+        WorkingTime dst = new WorkingTime();
+        dst.setWorkingType(src.getWorkingType());
+        dst.setStart(src.getStart());
+        dst.setEnd(src.getEnd());
+        dst.setDate(src.getDate());
+        dst.setInOffice(src.getInOffice());
+        dst.setOutOffice(dst.getOutOffice());
+        return dst;
+    }
 }

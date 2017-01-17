@@ -60,7 +60,7 @@ public class DateTimeUtils {
     public static String formatElapseTime(long milliseconds) {
         final int seconds = (int)(milliseconds %  60000L) /  1000;
         final int minutes = (int)(milliseconds % 360000L) / 60000;
-        final int hours = hoursOf(milliseconds);
+        final int hours = hoursOf(milliseconds) % 100;
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
@@ -68,5 +68,10 @@ public class DateTimeUtils {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(time);
         return minimumInDate(cal).getTimeInMillis();
+    }
+
+    public static long nowTime() {
+        Calendar cal = Calendar.getInstance();
+        return cal.getTimeInMillis();
     }
 }
