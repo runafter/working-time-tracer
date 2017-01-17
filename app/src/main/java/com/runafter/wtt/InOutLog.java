@@ -6,12 +6,12 @@ import java.util.Date;
 import java.util.List;
 
 import io.realm.RealmObject;
-import io.realm.RealmResults;
+import io.realm.annotations.RealmClass;
 
 /**
  * Created by runaf on 2017-01-06.
  */
-
+@RealmClass
 public class InOutLog extends RealmObject {
 
     public static final String FIELD_TIME = "time";

@@ -1,6 +1,5 @@
 package com.runafter.wtt;
 
-import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -8,10 +7,12 @@ import java.util.Date;
 import io.realm.RealmObject;
 import io.realm.annotations.Ignore;
 import io.realm.annotations.PrimaryKey;
+import io.realm.annotations.RealmClass;
 
 /**
  * Created by runaf on 2017-01-14.
  */
+@RealmClass
 public class WorkingTime extends RealmObject {
     public static final String WORKING_TYPE_ALL = "8H";
     public static final String WORKING_TYPE_HALF = "4H";

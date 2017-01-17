@@ -239,11 +239,11 @@ public class DashboardFragment extends Fragment {
             //debug("start:", item.getStart());
             String date = dateFormat.format(item.getDate());
             view.date.setText(date);
-            String start = item.getStart() > 0 ? timeFormat.format(item.getStart()) : "";
+            String start = item.getStart() > 0 ? timeFormat.format(item.getStart()) : "00:00";
             view.start.setText(start);
-            String end = item.getEnd() > 0 ? timeFormat.format(item.getEnd()) : "";
+            String end = item.getEnd() > 0 ? timeFormat.format(item.getEnd()) : "00:00";
             view.end.setText(end);
-            long workedTime = item.getEnd() - item.getStart();
+            long workedTime = item.getEnd() == 0 || item.getStart() == 0 ? 0 : item.getEnd() - item.getStart();
             String workedTimeString = DateTimeUtils.formatElapseTime(workedTime);
             view.workedTime.setText(workedTimeString);
             view.workingType.setText(item.getWorkingType());
