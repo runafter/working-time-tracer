@@ -28,6 +28,7 @@ android {
             buildConfigField "String", "MONITORING_PATTERN_TITLE", '"보안"'
         }
         release {
+            extensions debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
