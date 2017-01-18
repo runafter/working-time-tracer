@@ -28,7 +28,9 @@ android {
             buildConfigField "String", "MONITORING_PATTERN_TITLE", '"보안"'
         }
         release {
-            extensions debug
+            buildConfigField "String", "MONITORING_PATTERN_PACKAGNE_NAME", '"mdm"'
+            buildConfigField "String", "MONITORING_PATTERN_TEXT", '"보안"'
+            buildConfigField "String", "MONITORING_PATTERN_TITLE", '"보안"'
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
