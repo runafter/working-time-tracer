@@ -76,11 +76,10 @@ public class DashboardFragmentTest {
     @Test
     public void shouldDisplayWorkedTimeInList() {
         Log.d(TAG, "shouldDisplayWorkedTimeInList");
-        onView(withId(R.id.list_working_times)).check(matches(isDisplayed())).check(matches(withListSizeLeast(5)));
-        Log.d(TAG, "shouldDisplayWorkedTimeInList waiting finish");
 
         long lastWeekDayTime = lastWeekDayTime();
         updateWorkingTime(lastWeekDayTime, 0, 11, 1, true);
+
 
         onData(is(instanceOf(WorkingTime.class)))
                 .inAdapterView(withId(R.id.list_working_times))
@@ -90,14 +89,13 @@ public class DashboardFragmentTest {
                 .check(matches(hasDescendant(
                         allOf(withId(R.id.tvEnd), withText("12:00")))))
                 .check(matches(hasDescendant(
-                        allOf(withId(R.id.tvWorkedTime), withText("01:00")))));
+                        allOf(withId(R.id.tvWorkedTime), withText("01:00:00")))))
+        ;
     }
 
     @Test
     public void shouldUpdateDashboardWhenWorkingTimesUpdated() {
         Log.d(TAG, "shouldUpdateDashboardWhenWorkingTimesUpdated");
-        onView(withId(R.id.list_working_times)).check(matches(isDisplayed())).check(matches(withListSizeLeast(5)));
-        Log.d(TAG, "shouldDisplayWorkedTimeInList waiting finish");
 
         Calendar calendar = Calendar.getInstance();
         Calendar fr = DateTimeUtils.firstDateTimeOfWeek(calendar);
