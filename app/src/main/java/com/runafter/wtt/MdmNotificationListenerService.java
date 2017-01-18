@@ -75,7 +75,7 @@ public class MdmNotificationListenerService extends NotificationListenerService 
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationPosted " + sbn.getId());
         if (match(sbn)) {
             insert("IN", sbn);
-            log(sbn);
+            //log(sbn);
         }
     }
 
@@ -127,31 +127,31 @@ public class MdmNotificationListenerService extends NotificationListenerService 
         Log.d(TAG, Thread.currentThread().getName() + " : onNotificationRemoved " + sbn);
         if (match(sbn)) {
             insert("OUT", sbn);
-            log(sbn);
+            //log(sbn);
         }
     }
 
-    private void log(StatusBarNotification sbn) {
-        Log.d(TAG, "=================== StatusBarNotification ===================");
-        Log.d(TAG, "sbn.Id " + sbn.getId());
-        Log.d(TAG, "sbn.PackageName " + sbn.getPackageName());
-        Log.d(TAG, "sbn.Tag " + sbn.getTag());
-        Log.d(TAG, "sbn.PostTime " + sbn.getPostTime());
-        Log.d(TAG, "------------------- notification -------------------");
-        Notification notification = sbn.getNotification();
-        Log.d(TAG, "notification " + notification.toString());
-
-        Bundle extras = notification.extras;
-        Log.d(TAG, "EXTRA_TEXT " + extras.get(Notification.EXTRA_TEXT));
-        Log.d(TAG, "EXTRA_TEXT_LINES " + extras.get(Notification.EXTRA_TEXT_LINES));
-        Log.d(TAG, "EXTRA_BIG_TEXT " + extras.get(Notification.EXTRA_BIG_TEXT));
-        Log.d(TAG, "EXTRA_INFO_TEXT " + extras.get(Notification.EXTRA_INFO_TEXT));
-        Log.d(TAG, "EXTRA_MESSAGES " + extras.get(Notification.EXTRA_MESSAGES));
-        Log.d(TAG, "EXTRA_SUB_TEXT " + extras.get(Notification.EXTRA_SUB_TEXT));
-        Log.d(TAG, "EXTRA_SUMMARY_TEXT " + extras.get(Notification.EXTRA_SUMMARY_TEXT));
-        Log.d(TAG, "EXTRA_TITLE " + extras.get(Notification.EXTRA_TITLE));
-        Log.d(TAG, "EXTRA_TITLE_BIG " + extras.get(Notification.EXTRA_TITLE_BIG));
-    }
+//    private void log(StatusBarNotification sbn) {
+//        Log.d(TAG, "=================== StatusBarNotification ===================");
+//        Log.d(TAG, "sbn.Id " + sbn.getId());
+//        Log.d(TAG, "sbn.PackageName " + sbn.getPackageName());
+//        Log.d(TAG, "sbn.Tag " + sbn.getTag());
+//        Log.d(TAG, "sbn.PostTime " + sbn.getPostTime());
+//        Log.d(TAG, "------------------- notification -------------------");
+//        Notification notification = sbn.getNotification();
+//        Log.d(TAG, "notification " + notification.toString());
+//
+//        Bundle extras = notification.extras;
+//        Log.d(TAG, "EXTRA_TEXT " + extras.get(Notification.EXTRA_TEXT));
+//        Log.d(TAG, "EXTRA_TEXT_LINES " + extras.get(Notification.EXTRA_TEXT_LINES));
+//        Log.d(TAG, "EXTRA_BIG_TEXT " + extras.get(Notification.EXTRA_BIG_TEXT));
+//        Log.d(TAG, "EXTRA_INFO_TEXT " + extras.get(Notification.EXTRA_INFO_TEXT));
+//        Log.d(TAG, "EXTRA_MESSAGES " + extras.get(Notification.EXTRA_MESSAGES));
+//        Log.d(TAG, "EXTRA_SUB_TEXT " + extras.get(Notification.EXTRA_SUB_TEXT));
+//        Log.d(TAG, "EXTRA_SUMMARY_TEXT " + extras.get(Notification.EXTRA_SUMMARY_TEXT));
+//        Log.d(TAG, "EXTRA_TITLE " + extras.get(Notification.EXTRA_TITLE));
+//        Log.d(TAG, "EXTRA_TITLE_BIG " + extras.get(Notification.EXTRA_TITLE_BIG));
+//    }
 
     private boolean match(StatusBarNotification sbn) {
         String packageName = sbn.getPackageName();
@@ -168,9 +168,9 @@ public class MdmNotificationListenerService extends NotificationListenerService 
     }
 
     private void updateNotificationPattern() {
-        String packageName = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, ".*");
-        String title = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TITLE_PATTERN, ".*");
-        String text = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TEXT_PATTERN, ".*");
+        String packageName = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, BuildConfig.MONITORING_PATTERN_PACKAGNE_NAME);
+        String title = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TITLE_PATTERN, BuildConfig.MONITORING_PATTERN_TITLE);
+        String text = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TEXT_PATTERN, BuildConfig.MONITORING_PATTERN_TEXT);
 
         try {
             Pattern packageNamePattern = Pattern.compile(packageName);

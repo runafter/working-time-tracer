@@ -346,9 +346,9 @@ public class MainActivity extends AppCompatActivity
         builder.setMessage("정규표현식으로 입력 가능합니다.");
         builder.setCancelable(true);
 
-        String packageNamePattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, ".*");
-        String titlePattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TITLE_PATTERN, ".*");
-        String textPattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TEXT_PATTERN, ".*");
+        String packageNamePattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_PACKAGE_NAME_PATTERN, BuildConfig.MONITORING_PATTERN_PACKAGNE_NAME);
+        String titlePattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TITLE_PATTERN, BuildConfig.MONITORING_PATTERN_TITLE);
+        String textPattern = prefs.getString(SharePreferenceConfig.KEY_MONITOR_NOTIFICATION_TEXT_PATTERN, BuildConfig.MONITORING_PATTERN_TEXT);
 
         View convertView = LayoutInflater.from(this).inflate(R.layout.pattern_dialog_layout, null, false);
 
