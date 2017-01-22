@@ -3,6 +3,7 @@ package com.runafter.wtt;
 import org.junit.Test;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 
 import static com.runafter.wtt.DateTimeUtils.*;
@@ -99,4 +100,19 @@ public class DateTimeUtilsTest {
         assertThat(timeZoneOffset(calendarGMT) - timeZoneOffset(calendar) , is(1000L * 60 * 60 * 9));
     }
 
+    @Test
+    public void shouldCalculateSeconds() {
+        assertThat(secondsOf(0 * TIME_1_SECOND), is(0));
+        assertThat(secondsOf(60 * TIME_1_SECOND), is(0));
+        assertThat(secondsOf(10 * TIME_1_SECOND), is(10));
+        assertThat(secondsOf(70 * TIME_1_SECOND), is(10));
+        assertThat(secondsOf(210 * TIME_1_SECOND), is(30));
+    }
+    @Test
+    public void shouldCalculateMinutes() {
+        assertThat(minutesOf(0 * TIME_1_MINUTE), is(0));
+        assertThat(minutesOf(10 * TIME_1_MINUTE), is(10));
+        assertThat(minutesOf(60 * TIME_1_MINUTE), is(0));
+        assertThat(minutesOf(210 * TIME_1_MINUTE), is(30));
+    }
 }

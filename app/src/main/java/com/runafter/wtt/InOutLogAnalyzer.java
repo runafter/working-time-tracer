@@ -36,11 +36,19 @@ public class InOutLogAnalyzer {
             return Collections.emptyList();
 
         List<WorkingTime> workingTimes = workingTimeRepo.find(dateOf(timeOfLast(inOutLogsDesc)), dateOf(timeOfFirst(inOutLogsDesc)));
-
         return appliedWorkingTimes(workingTimes, inOutLogsDesc);
     }
+
+    private void resetStartEndTime(Collection<WorkingTime> workingTimes) {
+        for (WorkingTime workingTime : workingTimes) {
+            workingTime.setStart(0);
+            workingTime.setEnd(0);
+        }
+    }
+
     Collection<WorkingTime> appliedWorkingTimes(List<WorkingTime> workingTimesList, List<InOutLog> inOutLogsDesc) {
         Map<Long, WorkingTime> workingTimes = asMap(workingTimesList);
+        resetStartEndTime(workingTimes.values());
         for (InOutLog log : inOutLogsDesc) {
             long time = log.getTime();
             long date = dateOf(time);

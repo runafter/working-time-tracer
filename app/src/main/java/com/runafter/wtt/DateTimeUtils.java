@@ -12,6 +12,10 @@ import java.util.Date;
  */
 
 public class DateTimeUtils {
+    public static final long TIME_1_MINUTE = 1000L * 60L;
+    public static final long TIME_1_HOUR = TIME_1_MINUTE * 60L;
+    public static final long TIME_1_SECOND = 1000L;
+
     public static Calendar lastDateTimeOfWeek(Calendar calendar) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(calendar.getTime());
@@ -62,10 +66,18 @@ public class DateTimeUtils {
     }
 
     public static String formatElapseTime(long milliseconds) {
-        final int seconds = (int)(milliseconds %  60000L) /  1000;
-        final int minutes = (int)(milliseconds % 360000L) / 60000;
-        final int hours = hoursOf(milliseconds) % 100;
+        final int seconds = secondsOf(milliseconds);
+        final int minutes = minutesOf(milliseconds);
+        final int hours = hoursOf(milliseconds);
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+    }
+
+    public static int secondsOf(long milliseconds) {
+        return (int)(milliseconds / 1000L % 60L);
+    }
+
+    public static int minutesOf(long milliseconds) {
+        return (int)(milliseconds / 60000L % 60L);
     }
 
     public static long minimumInDate(long time) {

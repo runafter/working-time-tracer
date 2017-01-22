@@ -21,6 +21,7 @@ import com.runafter.wtt.DateTimeUtils;
 import com.runafter.wtt.MainActivity;
 import com.runafter.wtt.R;
 import com.runafter.wtt.WorkingTime;
+import com.runafter.wtt.WorkingTimeCalculator;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -72,6 +73,7 @@ public class DashboardFragment extends Fragment {
     private long timeZoneOffset;
     private Map<Period, RealmResults> workingTimesRealmResults;
     private RealmResults<WorkingTime> resultsThisWeekWorkingTime;
+    private WorkingTimeCalculator workingTimeCalculator;
 
     public DashboardFragment() {
         this.workingTimesRealmResults = new ConcurrentHashMap<>();
@@ -97,6 +99,7 @@ public class DashboardFragment extends Fragment {
         this.handler = new Handler();
         this.timeFormat = new SimpleDateFormat("HH:mm:ss");
         this.timeZoneOffset = timeZoneOffset();
+        this.workingTimeCalculator = new WorkingTimeCalculator();
         Log.d(TAG, "onCreate finish");
     }
 
@@ -242,16 +245,16 @@ public class DashboardFragment extends Fragment {
             view.start.setText(start);
             String end = item.getEnd() > 0 ? timeFormat.format(item.getEnd()) : "00:00";
             view.end.setText(end);
-            long workedTime = item.getEnd() == 0 || item.getStart() == 0 ? 0 : item.getEnd() - item.getStart();
+            long workedTime = workingTimeCalculator.dailyWorkingTimeOf(item.getStart(), item.getEnd());
             String workedTimeString = DateTimeUtils.formatElapseTime(workedTime);
             view.workedTime.setText(workedTimeString);
             view.workingType.setText(item.getWorkingType());
 
-//            Log.d(TAG, "WorkingTimesAdapter.getView date: " + date);
-//            Log.d(TAG, "WorkingTimesAdapter.getView start: " + start);
-//            Log.d(TAG, "WorkingTimesAdapter.getView end: " + end);
-//            Log.d(TAG, "WorkingTimesAdapter.getView workedTime: " + workedTime);
-//            Log.d(TAG, "WorkingTimesAdapter.getView workingType: " + item.getWorkingType());
+            Log.d(TAG, "WorkingTimesAdapter.getView date: " + date);
+            Log.d(TAG, "WorkingTimesAdapter.getView start: " + start + " : " + item.getStart());
+            Log.d(TAG, "WorkingTimesAdapter.getView end: " + end + " : " + item.getEnd());
+            Log.d(TAG, "WorkingTimesAdapter.getView workedTime: " + workedTime);
+            Log.d(TAG, "WorkingTimesAdapter.getView workingType: " + item.getWorkingType());
 
             applyStyles(rowView, view, item);
             Log.d(TAG, "WorkingTimesAdapter.getView finish");
@@ -394,7 +397,7 @@ public class DashboardFragment extends Fragment {
                     WorkingTime workingTime = iterator.next();
                     int hoursWorkingType = WorkingTime.hoursValueOf(workingTime.getWorkingType());
                     if (hoursWorkingType > 0) {
-                        long workedTime = workingTime.getEnd() - workingTime.getStart();
+                        long workedTime = workingTimeCalculator.dailyWorkingTimeOf(workingTime.getStart(), workingTime.getEnd());
                         if (workedTime > 0)
                             dashboard.workedTime += workedTime;
                     }

@@ -101,9 +101,6 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void execute(Realm realm) {
                         realm.insertOrUpdate(inOutLog);
-//                        InOutLog object = realm.createObject(InOutLog.class, inOutLog.getTime());
-//                        object.setType(inOutLog.getType());
-//                        object.setDesc(inOutLog.getDesc());
                     }
                 }, new Realm.Transaction.OnSuccess() {
                     @Override

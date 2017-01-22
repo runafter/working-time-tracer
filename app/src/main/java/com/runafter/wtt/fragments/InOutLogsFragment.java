@@ -172,7 +172,7 @@ public class InOutLogsFragment extends Fragment {
 
     private static class WorkingTimeLogAdapter extends RealmBaseAdapter<InOutLog> {
         private final Fragment fragment;
-        private DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        private DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         private void showToastMesssage(String message) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         }
