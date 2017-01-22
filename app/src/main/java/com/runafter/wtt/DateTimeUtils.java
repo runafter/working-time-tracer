@@ -52,6 +52,14 @@ public class DateTimeUtils {
         return calendar;
     }
 
+    public static Calendar maximunInDate(Calendar calendar) {
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar;
+    }
+
     public static long hoursToMilliseconds(int hours) {
         return 1000L * 60L * 60L * hours;
     }
@@ -86,6 +94,13 @@ public class DateTimeUtils {
         return minimumInDate(cal).getTimeInMillis();
     }
 
+    public static long maximunInDate(long time) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(time);
+        return maximunInDate(cal).getTimeInMillis();
+    }
+
+
     public static long nowTime() {
         Calendar cal = Calendar.getInstance();
         return cal.getTimeInMillis();
@@ -118,5 +133,18 @@ public class DateTimeUtils {
 
     public static String formatTime(Calendar calendar) {
         return defaultTimeFormat().format(calendar.getTime());
+    }
+
+    public static long today() {
+        long now = Calendar.getInstance().getTimeInMillis();
+        return dateOf(now);
+    }
+
+    private static long dateOf(long now) {
+        return minimumInDate(now);
+    }
+
+    public static long truncateMilliseconds(long time) {
+        return time / 1000L * 1000L;
     }
 }

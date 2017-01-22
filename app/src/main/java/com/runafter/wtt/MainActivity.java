@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity
     private RealmChangeListener inOutLogChangeListener;
     private RealmResults<InOutLog> inOutLogRealmResults;
     private InOutLogDialogFragment.InOutLogDialogListener inOutLogDailogListener;
+    private InOutStatusListener inOutStatusListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,17 +225,59 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setUpWorkingTimesDataUpdater(final long from) {
+        inOutStatusListener = new InOutStatusListener() {
+            Status status;
+            @Override
+            public Status current() {
+                return status;
+            }
+
+            @Override
+            public void onStatusChanged(Status oldStatus, Status newStatus) {
+                DashboardFragment fragment = (DashboardFragment)getFragmentManager().findFragmentByTag(DashboardFragment.class.getName());
+                if (fragment != null) {
+                    switch (newStatus) {
+                        case IN:
+                            fragment.startTimer();
+                            break;
+                        case OUT:
+                            fragment.stopTimer();
+                            break;
+                    }
+                }
+                status = newStatus;
+            }
+        };
         this.inOutLogChangeListener = new RealmChangeListener<RealmResults<InOutLog>>() {
             @Override
             public void onChange(RealmResults<InOutLog> results) {
                 Log.d(TAG, "setUpWorkingTimesDataUpdater.onChange " + results.size());
-                new WorkingTimesDataUpdateAsyncTask().execute(from, InOutLog.copyOf(results));
+                new WorkingTimesDataUpdateAsyncTask().execute(from, InOutLog.copyOf(results), inOutStatusListener);
             }
         };
         inOutLogRealmResults = realm.where(InOutLog.class)
                 .greaterThanOrEqualTo(InOutLog.FIELD_TIME, from)
                 .findAllSortedAsync(InOutLog.FIELD_TIME, Sort.DESCENDING);
         inOutLogRealmResults.addChangeListener(inOutLogChangeListener);
+    }
+
+    public interface InOutStatusListener {
+        enum Status {
+            IN, OUT;
+            public static Status of(InOutLog log) {
+                if (log == null)
+                    return null;
+                String type = log.getType();
+                if (InOutLog.TYPE_IN.equals(type))
+                    return IN;
+                if (InOutLog.TYPE_OUT.equals(type))
+                    return OUT;
+                return null;
+            }
+        }
+
+        Status current();
+        void onStatusChanged(Status oldStatus, Status newStatus);
     }
 
     public static class WorkingTimesDataUpdateAsyncTask extends AsyncTask<Object, Void, Collection<WorkingTime>> {
@@ -256,12 +299,26 @@ public class MainActivity extends AppCompatActivity
                 //realm.commitTransaction();
                 Log.d(TAG, "updatedWorkingTimes " + updatedWorkingTimes);
                 workingTimeRepo.updateAll(updatedWorkingTimes);
+
+                InOutStatusListener listener = (InOutStatusListener)params[2];
+                checkInOutStatus(listener, analyzer);
+
                 return updatedWorkingTimes;
             } finally {
                 this.realm.close();
                 this.realm = null;
             }
 
+        }
+
+        private void checkInOutStatus(InOutStatusListener listener, InOutLogAnalyzer analyzer) {
+            InOutStatusListener.Status current = listener.current();
+            long today = DateTimeUtils.today();
+            InOutLog inOutLog = analyzer.lastLogOf(today);
+            InOutStatusListener.Status newStatus = InOutStatusListener.Status.of(inOutLog);
+            Log.d(TAG, "checkInOutStatus " + current + " => " + newStatus);
+            if (current != newStatus)
+                listener.onStatusChanged(current, newStatus);
         }
     }
 

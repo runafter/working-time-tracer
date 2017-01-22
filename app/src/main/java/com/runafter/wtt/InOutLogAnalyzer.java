@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.runafter.wtt.DateTimeUtils.minimumInDate;
+import static com.runafter.wtt.DateTimeUtils.truncateMilliseconds;
 
 /**
  * Created by runaf on 2017-01-16.
@@ -50,7 +51,7 @@ public class InOutLogAnalyzer {
         Map<Long, WorkingTime> workingTimes = asMap(workingTimesList);
         resetStartEndTime(workingTimes.values());
         for (InOutLog log : inOutLogsDesc) {
-            long time = log.getTime();
+            long time = truncateMilliseconds(log.getTime());
             long date = dateOf(time);
             WorkingTime workingTime = workingTimes.get(date);
             if (workingTime == null) {
@@ -113,5 +114,10 @@ public class InOutLogAnalyzer {
     }
     private long dateOf(long time) {
         return minimumInDate(time);
+    }
+
+    public InOutLog lastLogOf(long date) {
+        List<InOutLog> list = this.inOutLogRepo.findDesc(date, DateTimeUtils.maximunInDate(date));
+        return list.isEmpty() ? null : list.get(0);
     }
 }
