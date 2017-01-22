@@ -1,7 +1,11 @@
 package com.runafter.wtt;
 
+import java.text.Format;
+import java.text.MessageFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by runaf on 2017-01-14.
@@ -73,5 +77,34 @@ public class DateTimeUtils {
     public static long nowTime() {
         Calendar cal = Calendar.getInstance();
         return cal.getTimeInMillis();
+    }
+
+    public static String formatDate(Calendar calendar) {
+        return defaultDateFormat().format(calendar.getTime());
+    }
+
+    private static SimpleDateFormat defaultDateFormat() {
+        return new SimpleDateFormat("yyyy-MM-dd");
+    }
+    private static SimpleDateFormat defaultTimeFormat() {
+        return new SimpleDateFormat("HH:mm:ss");
+    }
+
+    public static Calendar parseDateToCalendar(String string) throws ParseException {
+        Date date = defaultDateFormat().parse(string);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        return calendar;
+    }
+
+    public static Calendar parseTimeToCalendar(String string) throws ParseException {
+        Date date = defaultTimeFormat().parse(string);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        return calendar;
+    }
+
+    public static String formatTime(Calendar calendar) {
+        return defaultTimeFormat().format(calendar.getTime());
     }
 }

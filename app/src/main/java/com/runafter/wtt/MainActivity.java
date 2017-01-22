@@ -26,7 +26,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.runafter.wtt.dialogs.InOutLogDialogFragment;
 import com.runafter.wtt.fragments.DashboardFragment;
 import com.runafter.wtt.fragments.InOutLogsFragment;
 
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity
     private Fragment fragment;
     private RealmChangeListener inOutLogChangeListener;
     private RealmResults<InOutLog> inOutLogRealmResults;
+    private InOutLogDialogFragment.InOutLogDialogListener inOutLogDailogListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,11 +83,40 @@ public class MainActivity extends AppCompatActivity
         menuMonitoringRunning = navigationView.getMenu().findItem(R.id.monitoring_running);
         drawer.addDrawerListener(drawerListener());
 
+
         this.handler = new Handler();
 
         initDB();
 
         startMonitoringService();
+
+
+    }
+
+    private void initInOutLogDialogListener() {
+        this.inOutLogDailogListener = new InOutLogDialogFragment.InOutLogDialogListenerAdapter() {
+            @Override
+            public void onCreate(final InOutLog inOutLog) {
+                realm.executeTransactionAsync(new Realm.Transaction() {
+                    @Override
+                    public void execute(Realm realm) {
+                        realm.insertOrUpdate(inOutLog);
+//                        InOutLog object = realm.createObject(InOutLog.class, inOutLog.getTime());
+//                        object.setType(inOutLog.getType());
+//                        object.setDesc(inOutLog.getDesc());
+                    }
+                }, new Realm.Transaction.OnSuccess() {
+                    @Override
+                    public void onSuccess() {
+                        toastMessage("신규 출입 기록이 추가되었습니다.");
+                    }
+                });
+            }
+        };
+    }
+
+    private void toastMessage(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     public static RealmConfiguration realmConfiguration() {
@@ -174,6 +206,7 @@ public class MainActivity extends AppCompatActivity
             realm.close();
         realm = Realm.getInstance(realmConfiguration());
         setUpWorkingTimesDataUpdater(lastWorkingTimesUpdatedTime());
+        initInOutLogDialogListener();
     }
 
     @Override
@@ -291,12 +324,18 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.menu_add_out_log_now) {
             addOutLogNow();
         } else if (id == R.id.menu_add_inout_log) {
-
+            showInOutDialog();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void showInOutDialog() {
+        InOutLogDialogFragment fragment = new InOutLogDialogFragment();
+        fragment.setResultListener(this.inOutLogDailogListener);
+        fragment.show(getFragmentManager(), "add-new-inoutlog");
     }
 
     private void addOutLogNow() {
@@ -311,8 +350,7 @@ public class MainActivity extends AppCompatActivity
         realm.executeTransactionAsync(new Realm.Transaction() {
             @Override
             public void execute(Realm bgRealm) {
-                InOutLog log = bgRealm.createObject(InOutLog.class);
-                log.setTime(time);
+                InOutLog log = bgRealm.createObject(InOutLog.class, time);
                 log.setType(type);
                 log.setDesc("manual");
             }

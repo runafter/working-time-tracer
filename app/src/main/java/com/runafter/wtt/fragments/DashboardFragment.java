@@ -3,7 +3,6 @@ package com.runafter.wtt.fragments;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.PeriodicSync;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp">
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="none"
+        android:textIsSelectable="true"
+        android:ems="10"
+        android:id="@+id/et_date"
+        android:hint="Date"
+        />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="none"
+        android:textIsSelectable="true"
+        android:ems="10"
+        android:id="@+id/et_time"
+        android:hint="Time" />
+
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal"
+        android:showDividers="middle">
+
+        <RadioButton
+            android:text="IN"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/rb_type_in"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start"
+            android:layout_gravity="center_horizontal"
+            android:paddingRight="50dp" />
+
+        <RadioButton
+            android:text="OUT"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/rb_type_out"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start" />
+    </RadioGroup>
+
+</LinearLayout>

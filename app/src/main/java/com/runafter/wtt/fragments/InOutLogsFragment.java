@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,10 +14,12 @@ import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.runafter.wtt.MainActivity;
 import com.runafter.wtt.R;
 import com.runafter.wtt.InOutLog;
+import com.runafter.wtt.dialogs.InOutLogDialogFragment;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -28,6 +29,7 @@ import io.realm.OrderedRealmCollection;
 import io.realm.Realm;
 import io.realm.RealmBaseAdapter;
 import io.realm.RealmQuery;
+import io.realm.RealmResults;
 import io.realm.Sort;
 
 /**
@@ -164,33 +166,101 @@ public class InOutLogsFragment extends Fragment {
     }
     private ListAdapter logsListAdapter() {
         RealmQuery<InOutLog> q = realm.where(InOutLog.class);
-        RealmBaseAdapter<InOutLog> adapter = new WorkingTimeLogAdapter(this.getActivity(), q.findAllSorted("time", Sort.DESCENDING)) ;
+        RealmBaseAdapter<InOutLog> adapter = new WorkingTimeLogAdapter(this, q.findAllSorted("time", Sort.DESCENDING)) ;
         return adapter;
     }
 
     private static class WorkingTimeLogAdapter extends RealmBaseAdapter<InOutLog> {
+        private final Fragment fragment;
         private DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        private void showToastMesssage(String message) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        }
         private View.OnClickListener typeOnClickListener = new View.OnClickListener() {
+            public InOutLogDialogFragment.InOutLogDialogListener inOutLogDailogListener = new InOutLogDialogFragment.InOutLogDialogListenerAdapter() {
+                @Override
+                public void onUpdate(final InOutLog oldInOutLog, final InOutLog newInOutLog) {
+                    super.onUpdate(oldInOutLog, newInOutLog);
+                    if (oldInOutLog.equals(newInOutLog))
+                        showToastMesssage("동일한 정보이므로 수정하지 않습니다.");
+                    Realm realm = Realm.getInstance(MainActivity.realmConfiguration());
+                    realm.executeTransactionAsync(new Realm.Transaction() {
+                        @Override
+                        public void execute(Realm realm) {
+                            final RealmResults<InOutLog> results = realm.where(InOutLog.class).equalTo(InOutLog.FIELD_TIME, oldInOutLog.getTime()).findAll();
+                            if (oldInOutLog.getTime().equals(newInOutLog.getTime())) {
+                                results.first().setType(newInOutLog.getType());
+                            } else {
+                                results.deleteAllFromRealm();
+                                realm.insertOrUpdate(newInOutLog);
+                            }
+                        }
+                    }, new Realm.Transaction.OnSuccess() {
+                        @Override
+                        public void onSuccess() {
+                            showToastMesssage("수정했습니다.");
+                        }
+                    }, new Realm.Transaction.OnError() {
+                        @Override
+                        public void onError(Throwable error) {
+                            showToastMesssage("수정 중 오류가 발생했습니다.");
+                            Log.e(TAG, "Updating IN/OUT log was failed.", error);
+                        }
+                    });
+                    realm.close();
+                }
+
+                @Override
+                public void onDelete(final InOutLog inOutLog) {
+                    super.onDelete(inOutLog);
+                    Realm realm = Realm.getInstance(MainActivity.realmConfiguration());
+                    realm.executeTransactionAsync(new Realm.Transaction() {
+                        @Override
+                        public void execute(Realm realm) {
+                            final RealmResults<InOutLog> results = realm.where(InOutLog.class).equalTo(InOutLog.FIELD_TIME, inOutLog.getTime()).findAll();
+                            results.deleteAllFromRealm();
+                        }
+                    }, new Realm.Transaction.OnSuccess() {
+                        @Override
+                        public void onSuccess() {
+                            showToastMesssage("삭제했습니다.");
+                        }
+                    }, new Realm.Transaction.OnError() {
+                        @Override
+                        public void onError(Throwable error) {
+                            showToastMesssage("삭제 중 오류가 발생했습니다.");
+                            Log.e(TAG, "Deleting IN/OUT log was failed.", error);
+                        }
+                    });
+                    realm.close();
+                }
+            };
+
             @Override
             public void onClick(View v) {
-                if (v.getTag() instanceof WorkingTimeLogAdapter.ViewHolder) {
-                    WorkingTimeLogAdapter.ViewHolder viewHolder = (WorkingTimeLogAdapter.ViewHolder)v.getTag();
-                    String tag = (viewHolder.typeView.getTag() instanceof String) ? (String)viewHolder.typeView.getTag() : "";
-                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                    builder.setTitle("Description");
-                    builder.setMessage(tag);
-                    builder.show();
+                if (v.getTag() instanceof ViewHolder) {
+                    ViewHolder viewHolder = (ViewHolder)v.getTag();
+                    final InOutLog item = InOutLog.copyOf(viewHolder.item);
+
+                    InOutLogDialogFragment fragment = new InOutLogDialogFragment();
+
+                    fragment.setResultListener(this.inOutLogDailogListener);
+                    fragment.setBase(item);
+
+                    fragment.show(WorkingTimeLogAdapter.this.fragment.getFragmentManager(), "update-new-inoutlog");
                 }
             }
         };
 
-        public WorkingTimeLogAdapter(@NonNull Context context, @Nullable OrderedRealmCollection<InOutLog> data) {
-            super(context, data);
+        public WorkingTimeLogAdapter(@NonNull Fragment fragment, @Nullable OrderedRealmCollection<InOutLog> data) {
+            super(fragment.getActivity(), data);
+            this.fragment = fragment;
         }
 
         private static class ViewHolder {
             TextView typeView;
             TextView timeView;
+            InOutLog item;
         }
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -209,6 +279,7 @@ public class InOutLogsFragment extends Fragment {
             }
 
             InOutLog item = adapterData.get(position);
+            viewHolder.item = item;
             viewHolder.timeView.setText(format(item.getTime()));
             String type = item.getType();
             viewHolder.typeView.setText(type != null && !type.isEmpty() ? type.toString() : "<EMPTY>");
@@ -217,7 +288,9 @@ public class InOutLogsFragment extends Fragment {
             return convertView;
         }
 
-        private String format(long time) {
+        private String format(Long time) {
+            if (time == null)
+                return "EMPTY";
             return format.format(new Date(time));
         }
     }
