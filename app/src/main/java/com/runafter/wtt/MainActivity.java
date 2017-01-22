@@ -234,7 +234,14 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onStatusChanged(Status oldStatus, Status newStatus) {
+                status = newStatus;
                 DashboardFragment fragment = (DashboardFragment)getFragmentManager().findFragmentByTag(DashboardFragment.class.getName());
+
+                if (newStatus == null) {
+                    fragment.stopTimer();
+                    return;
+                }
+
                 if (fragment != null) {
                     switch (newStatus) {
                         case IN:
@@ -245,7 +252,7 @@ public class MainActivity extends AppCompatActivity
                             break;
                     }
                 }
-                status = newStatus;
+
             }
         };
         this.inOutLogChangeListener = new RealmChangeListener<RealmResults<InOutLog>>() {

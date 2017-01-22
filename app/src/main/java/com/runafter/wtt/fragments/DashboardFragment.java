@@ -352,7 +352,6 @@ public class DashboardFragment extends Fragment {
         }
         this.realm = Realm.getInstance(MainActivity.realmConfiguration());
         this.handler.post(taskSetWorkingTimeAdapter());
-        startTimer();
         setUpDashboardUpdater();
         //setUpWorkingTImeListUpdater();
         Log.d(TAG, "DashboardFragment.onResume finish");
@@ -488,9 +487,12 @@ public class DashboardFragment extends Fragment {
         return  DateTimeUtils.minimumInDate(time);
     }
 
-    public void stopTimer() {
-        timer.cancel();
-        timer.purge();
+    public synchronized void stopTimer() {
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+            timer = null;
+        }
     }
 
     private Runnable taskSetWorkingTimeAdapter() {
