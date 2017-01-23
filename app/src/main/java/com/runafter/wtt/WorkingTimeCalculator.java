@@ -16,7 +16,7 @@ public class WorkingTimeCalculator {
             return 0;
         long worked = end - start;
         if (worked >= MILLISECONDS_OF_8_HOURS)
-            return Math.max(worked - MILLISECONDS_OF_1_HOUR, MILLISECONDS_OF_12_HOURS);
+            return Math.min(worked - MILLISECONDS_OF_1_HOUR, MILLISECONDS_OF_12_HOURS);
         if (worked >= MILLISECONDS_OF_4_HOURS)
             return worked - MILLISECONDS_OF_30_MINUTES;
         return worked;
