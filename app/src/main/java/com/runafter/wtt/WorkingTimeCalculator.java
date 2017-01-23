@@ -1,5 +1,8 @@
 package com.runafter.wtt;
 
+import static com.runafter.wtt.DateTimeUtils.truncateMilliseconds;
+import static com.runafter.wtt.DateTimeUtils.truncateSeconds;
+
 /**
  * Created by runaf on 2017-01-23.
  */
@@ -20,5 +23,12 @@ public class WorkingTimeCalculator {
         if (worked >= MILLISECONDS_OF_4_HOURS)
             return worked - MILLISECONDS_OF_30_MINUTES;
         return worked;
+    }
+
+    public long getWithSecondsOnlyToday(long today, long date, long workedTime) {
+        if (date != today)
+            return truncateSeconds(workedTime);
+        else
+            return truncateMilliseconds(workedTime);
     }
 }

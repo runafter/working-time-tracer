@@ -386,6 +386,7 @@ public class DashboardFragment extends Fragment {
     private void setUpDashboardUpdater() {
         Log.d(TAG, "setUpDashboardUpdater");
         Calendar calendar = Calendar.getInstance();
+        final long today = DateTimeUtils.today();
         Calendar to = lastDateTimeOfWeek(calendar);
         Calendar fr = firstDateTimeOfWeek(calendar);
         if (resultsThisWeekWorkingTime != null)
@@ -394,12 +395,10 @@ public class DashboardFragment extends Fragment {
                 .lessThanOrEqualTo(WorkingTime.FIELD_DATE, to.getTimeInMillis())
                 .greaterThanOrEqualTo(WorkingTime.FIELD_DATE, fr.getTimeInMillis())
                 .findAllAsync();
-        final AtomicInteger seq = new AtomicInteger(0);
         RealmChangeListener<RealmResults<WorkingTime>> listener = new RealmChangeListener<RealmResults<WorkingTime>>() {
             @Override
             public void onChange(RealmResults<WorkingTime> result) {
                 Log.d(TAG, "setUpDashboardUpdater.resultsThisWeekWorkingTime.onChange " + this.hashCode());
-                int s = seq.getAndIncrement();
                 Iterator<WorkingTime> iterator = result.iterator();
                 Dashboard dashboard = new Dashboard();
                 dashboard.workedTime = 0;
@@ -407,13 +406,14 @@ public class DashboardFragment extends Fragment {
                 dashboard.inOfficeTime = 0;
                 dashboard.outOfficeTime = 0;
 
+                WorkingTime workingTime;
                 while (iterator.hasNext()) {
-                    WorkingTime workingTime = iterator.next();
+                    workingTime = iterator.next();
                     int hoursWorkingType = WorkingTime.hoursValueOf(workingTime.getWorkingType());
                     if (hoursWorkingType > 0) {
                         long workedTime = workingTimeCalculator.dailyWorkingTimeOf(workingTime.getStart(), workingTime.getEnd());
                         if (workedTime > 0)
-                            dashboard.workedTime += workedTime;
+                            dashboard.workedTime += workingTimeCalculator.getWithSecondsOnlyToday(today, workingTime.getDate(), workedTime);
                     }
                     dashboard.target += hoursWorkingType;
                     dashboard.inOfficeTime += workingTime.getInOffice();

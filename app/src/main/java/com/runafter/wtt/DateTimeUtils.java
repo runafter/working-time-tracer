@@ -147,4 +147,8 @@ public class DateTimeUtils {
     public static long truncateMilliseconds(long time) {
         return time / 1000L * 1000L;
     }
+
+    public static long truncateSeconds(long time) {
+        return time / 1000000L * 1000000L;
+    }
 }
