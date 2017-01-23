@@ -74,6 +74,7 @@ public class DashboardFragment extends Fragment {
     private Map<Period, RealmResults> workingTimesRealmResults;
     private RealmResults<WorkingTime> resultsThisWeekWorkingTime;
     private WorkingTimeCalculator workingTimeCalculator;
+    private MainActivity.InOutStatusListener.Status inOutStatus;
 
     public DashboardFragment() {
         this.workingTimesRealmResults = new ConcurrentHashMap<>();
@@ -150,6 +151,16 @@ public class DashboardFragment extends Fragment {
             default:
                 return "unknown";
         }
+    }
+
+    public void setInOutStatus(MainActivity.InOutStatusListener.Status inOutStatus) {
+        if (this.inOutStatus != inOutStatus) {
+            if (inOutStatus == MainActivity.InOutStatusListener.Status.IN)
+                startTimer();
+            if (inOutStatus == MainActivity.InOutStatusListener.Status.OUT)
+                stopTimer();
+        }
+        this.inOutStatus = inOutStatus;
     }
 
 
@@ -353,7 +364,7 @@ public class DashboardFragment extends Fragment {
         this.realm = Realm.getInstance(MainActivity.realmConfiguration());
         this.handler.post(taskSetWorkingTimeAdapter());
         setUpDashboardUpdater();
-        //setUpWorkingTImeListUpdater();
+
         Log.d(TAG, "DashboardFragment.onResume finish");
     }
 
@@ -464,25 +475,28 @@ public class DashboardFragment extends Fragment {
 
             @Override
             public void run() {
-
-                if (isInOffice()) {
-                    Realm realm = Realm.getInstance(MainActivity.realmConfiguration());
-                    realm.executeTransaction(new Realm.Transaction() {
-                         @Override
-                         public void execute(Realm realm) {
-                             Calendar cal = Calendar.getInstance();
-                             long time = truncateMilliseconds(cal.getTimeInMillis());
-                             WorkingTime workingTime = realm.where(WorkingTime.class).equalTo(WorkingTime.FIELD_DATE, dateOf(time)).findFirst();
-                             workingTime.setEnd(time);
-                         }
-                     });
-                    realm.close();
-                }
-
+                updateWorkingTImeWhenStatusIn();
                 scheduleTimerTask();
             }
         };
     }
+
+    private void updateWorkingTImeWhenStatusIn() {
+        if (isInOffice()) {
+            Realm realm = Realm.getInstance(MainActivity.realmConfiguration());
+            realm.executeTransaction(new Realm.Transaction() {
+                 @Override
+                 public void execute(Realm realm) {
+                     Calendar cal = Calendar.getInstance();
+                     long time = truncateMilliseconds(cal.getTimeInMillis());
+                     WorkingTime workingTime = realm.where(WorkingTime.class).equalTo(WorkingTime.FIELD_DATE, dateOf(time)).findFirst();
+                     workingTime.setEnd(time);
+                 }
+             });
+            realm.close();
+        }
+    }
+
     private long dateOf(long time) {
         return  DateTimeUtils.minimumInDate(time);
     }

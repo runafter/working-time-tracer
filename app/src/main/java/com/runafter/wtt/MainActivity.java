@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity
     private RealmResults<InOutLog> inOutLogRealmResults;
     private InOutLogDialogFragment.InOutLogDialogListener inOutLogDailogListener;
     private InOutStatusListener inOutStatusListener;
+    private InOutStatusListener.Status inOutStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -226,15 +227,15 @@ public class MainActivity extends AppCompatActivity
 
     private void setUpWorkingTimesDataUpdater(final long from) {
         inOutStatusListener = new InOutStatusListener() {
-            Status status;
+
             @Override
             public Status current() {
-                return status;
+                return inOutStatus;
             }
 
             @Override
             public void onStatusChanged(Status oldStatus, Status newStatus) {
-                status = newStatus;
+                inOutStatus = newStatus;
                 DashboardFragment fragment = (DashboardFragment)getFragmentManager().findFragmentByTag(DashboardFragment.class.getName());
 
                 if (newStatus == null) {
@@ -243,14 +244,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 if (fragment != null) {
-                    switch (newStatus) {
-                        case IN:
-                            fragment.startTimer();
-                            break;
-                        case OUT:
-                            fragment.stopTimer();
-                            break;
-                    }
+                    fragment.setInOutStatus(newStatus);
                 }
 
             }
@@ -436,7 +430,9 @@ public class MainActivity extends AppCompatActivity
 
     private void viewDashboardFragment() {
         Log.d(TAG, "viewDashboardFragment");
-        replaceFragment(DashboardFragment.newInstance());
+        DashboardFragment fragment = DashboardFragment.newInstance();
+        fragment.setInOutStatus(this.inOutStatus);
+        replaceFragment(fragment);
     }
 
     private void openMonitorPatternUpdateDialong() {
