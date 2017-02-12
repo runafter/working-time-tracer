@@ -154,10 +154,11 @@ public class DashboardFragment extends Fragment {
     }
 
     public void setInOutStatus(MainActivity.InOutStatusListener.Status inOutStatus) {
+        Log.d(TAG, "setInOutStatus " + this.inOutStatus + " => " + inOutStatus);
         if (this.inOutStatus != inOutStatus) {
             if (inOutStatus == MainActivity.InOutStatusListener.Status.IN)
                 startTimer();
-            if (inOutStatus == MainActivity.InOutStatusListener.Status.OUT)
+            if (inOutStatus == MainActivity.InOutStatusListener.Status.OUT || inOutStatus == null)
                 stopTimer();
         }
         this.inOutStatus = inOutStatus;
@@ -458,6 +459,7 @@ public class DashboardFragment extends Fragment {
     }
     public void startTimer() {
         timer = new Timer();
+        updateWorkingTImeWhenStatusIn();
         scheduleTimerTask();
     }
     private void scheduleTimerTask() {
@@ -482,6 +484,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateWorkingTImeWhenStatusIn() {
+        Log.d(TAG, "updateWorkingTImeWhenStatusIn() isInOffice? " + isInOffice());
         if (isInOffice()) {
             Realm realm = Realm.getInstance(MainActivity.realmConfiguration());
             realm.executeTransaction(new Realm.Transaction() {

@@ -214,6 +214,7 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "MainActivity.onPause");
         if (realm != null) {
             realm.removeChangeListener(inOutLogChangeListener);
+            inOutStatusListener.onStatusChanged(inOutStatus, null);
             inOutLogChangeListener = null;
             inOutLogRealmResults = null;
             realm.close();
@@ -239,7 +240,7 @@ public class MainActivity extends AppCompatActivity
                 DashboardFragment fragment = (DashboardFragment)getFragmentManager().findFragmentByTag(DashboardFragment.class.getName());
 
                 if (newStatus == null) {
-                    fragment.stopTimer();
+                    fragment.setInOutStatus(null);
                     return;
                 }
 
